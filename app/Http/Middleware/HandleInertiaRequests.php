@@ -40,4 +40,20 @@ class HandleInertiaRequests extends Middleware
             //
         ]);
     }
+
+    // 多言語化対応
+    protected function shareData(Request $request)
+    {
+        return array_merge(parent::shareData($request), [
+            'locale' => app()->getLocale(),
+            'translations' => $this->loadTranslations(),
+        ]);
+    }
+
+    protected function loadTranslations()
+    {
+        $locale = app()->getLocale();
+        $translations = file_get_contents(resource_path("js/Pages/lang/{$locale}.json"));
+        return json_decode($translations, true);
+    }
 }
