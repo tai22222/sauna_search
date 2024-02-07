@@ -4,6 +4,8 @@ use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
+use App\Http\Controllers\SaunaController;
+
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -33,3 +35,18 @@ Route::middleware([
         return Inertia::render('Dashboard');
     })->name('dashboard');
 });
+
+// saunas 一覧表示
+Route::get('/saunas', [SaunaController::class, 'index'])->name('sauna.index');
+// saunas 施設追加ページ表示
+Route::get('/saunas/create', [SaunaController::class, 'create'])->name('sauna.create');
+// saunas 施設追加処理
+Route::post('/saunas/create', [SaunaController::class, 'store'])->name('sauna.store');
+// saunas 施設一覧
+Route::get('/saunas/show', [SaunaController::class, 'show'])->name('sauna.show');
+// saunas 施設詳細表示
+Route::get('/saunas/edit/{id}', [SaunaController::class, 'edit'])->name('sauna.edit');
+// saunas 施設詳細更新処理
+// Route::put('/saunas/{id}', [SaunaController::class, 'update'])->name('sauna.update');
+// saunas 施設情報削除処理
+// Route::delete('/saunas/{id}', [SaunaController::class, 'destroy'])->name('sauna.destroy');
