@@ -5,8 +5,7 @@ namespace Database\Seeders;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
-
-class DatabaseSeeder extends Seeder
+class WaterBathsTableSeeder extends Seeder
 {
     /**
      * Seed the application's database.
@@ -15,8 +14,6 @@ class DatabaseSeeder extends Seeder
      */
     public function run()
     {
-      // $this->call(SaunasTableSeeder::class);
-      // $this->call(SaunaInfosTableSeeder::class);
-      $this->call(WaterBathsTableSeeder::class);
+      \App\Models\WaterBath::factory(10)->create();
     }
 }
