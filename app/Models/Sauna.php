@@ -24,7 +24,8 @@ class Sauna extends Model
       'website_url',
       'business_hours_detail',
       'min_fee',
-      'fee_text',
+      'fee_text',,
+      'delete_flag'
   ];
   
 }

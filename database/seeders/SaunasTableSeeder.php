@@ -14,12 +14,6 @@ class SaunaTableSeeder extends Seeder
      */
     public function run()
     {
-      // \App\Models\Sauna::factory(10)->create();
-        // \App\Models\User::factory(10)->create();
-
-        // \App\Models\User::factory()->create([
-        //     'name' => 'Test User',
-        //     'email' => 'test@example.com',
-        // ]);
+      \App\Models\Sauna::factory(10)->create();
     }
 }

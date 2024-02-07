@@ -35,6 +35,7 @@ class User extends Authenticatable
         'debut_month',
         'home_sauna',
         'profile_text',
+        'delete_flag'
     ];
 
     /**
