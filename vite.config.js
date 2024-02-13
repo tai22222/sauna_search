@@ -11,7 +11,7 @@ export default defineConfig({
         vue({
             template: {
                 transformAssetUrls: {
-                    base: null,
+                    base: 'http://127.0.0.1:5173/',
                     includeAbsolute: false,
                 },
             },

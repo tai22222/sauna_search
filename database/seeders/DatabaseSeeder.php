@@ -17,6 +17,6 @@ class DatabaseSeeder extends Seeder
     {
       // $this->call(SaunasTableSeeder::class);
       // $this->call(SaunaInfosTableSeeder::class);
-      $this->call(WaterBathsTableSeeder::class);
+      // $this->call(WaterBathsTableSeeder::class);
     }
 }

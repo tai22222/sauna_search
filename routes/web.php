@@ -37,7 +37,7 @@ Route::middleware([
 });
 
 // saunas 一覧表示
-Route::get('/saunas', [SaunaController::class, 'index'])->name('sauna.index');
+Route::get('/saunas', [SaunaController::class, 'create'])->name('sauna.index');
 // saunas 施設追加ページ表示
 Route::get('/saunas/create', [SaunaController::class, 'create'])->name('sauna.create');
 // saunas 施設追加処理

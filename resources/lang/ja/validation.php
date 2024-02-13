@@ -153,6 +153,34 @@ return [
     |
     */
 
-    'attributes' => [],
+    'attributes' => [
+      'facility_name' => '施設名',
+      'facility_type_id' => '施設タイプ',
+      'usage_type_id' => '利用状態',
+      'prefecture_id' => '都道府県',
+      'address1' => '住所1',
+      'address2' => '住所2',
+      'address3' => '住所3',
+      'access_text' => 'アクセス',
+      'tel' => '電話番号',
+      'website_url' => 'URL',
+      'business_hours_detail' => '営業時間',
+      'min_fee' => '最低料金',
+      'fee_text' => '料金詳細',
+
+      'sauna_type_id' => 'サウナタイプ',
+      'stove_type_id' => 'ストーブ',
+      'heat_type_id' => '熱源',
+      'temperature_sauna' => '温度',
+      'capacity_sauna' => '収容人数',
+      'additional_info_sauna' => '追加情報',
+
+      'bath_type_id' => 'バスタイプ',
+      'water_type_id' => '水のタイプ',
+      'temperature_water' => '温度',
+      'capacity_water' => '収容人数',
+      'deep_water' => '水深',
+      'additional_info_water' => '追加情報',
+  ],
 
 ];

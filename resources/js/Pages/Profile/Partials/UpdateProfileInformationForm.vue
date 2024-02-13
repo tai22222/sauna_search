@@ -12,7 +12,7 @@ import TextInput from '@/Components/TextInput.vue';
 import Textarea from '@/Components/Textarea.vue';
 import SelectBox from '@/Components/SelectBox.vue';
 
-
+// 親コンポーネント(Create.vue)からオブジェクト、配列の受け渡し
 const props = defineProps({
     user: Object,
 });
@@ -38,6 +38,18 @@ const genderOptions = ref([
     { value: 1, label: '男性' },
     { value: 2, label: '女性' },
 ]);
+
+// const genders = ref([]);
+
+// ラジオボタンの選択肢として使うためにgendersデータをgenderOptionsにマッピング
+// const genderOptions = computed(() => {
+//   return genders.value.map(gender => {
+//     return {
+//       value: gender.id,
+//       label: gender.name
+//     };
+//   });
+// });
 
 // 西暦の定義
 const years = ref([]);
@@ -90,6 +102,7 @@ const updateProfileInformation = () => {
     });
 };
 
+// Eメール変更時
 const sendEmailVerification = () => {
     verificationLinkSent.value = true;
 };
@@ -127,7 +140,7 @@ const clearPhotoFileInput = () => {
         photoInput.value.value = null;
     }
 };
-
+// console.log(props);
 </script>
 
 <template>
@@ -141,6 +154,7 @@ const clearPhotoFileInput = () => {
         </template>
 
         <template #form>
+          <!-- {{ user }} -->
             <!-- プロフィール写真 -->
             <div v-if="$page.props.jetstream.managesProfilePhotos" class="col-span-6 sm:col-span-4">
                 <!-- プロフィール写真のinput -->
@@ -234,7 +248,6 @@ const clearPhotoFileInput = () => {
             <div class="col-span-6 sm:col-span-4">
               <InputLabel for="gender_id" value="性別" />
               <div class="mt-1">
-
                 <label v-for="(option, index) in genderOptions" :key="index" class="inline-flex items-center ml-2">
                 <input
                   type="radio"

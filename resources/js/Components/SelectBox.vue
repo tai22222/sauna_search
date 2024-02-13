@@ -9,8 +9,15 @@ const props = defineProps({
     label: String,
     options: Array,
     error: String,
+    typesArray: Array,
+    column: {
+      type: String,
+      default: 'type_name'
+  }
 });
 
+const input = ref(null);
+const selectedValue = ref(props.modelValue);
 
 // defineEmits(['update:modelValue']);
 const emit = defineEmits(['update:modelValue']);
@@ -18,14 +25,14 @@ const emit = defineEmits(['update:modelValue']);
 // optionの内容が変更されたら検知し、modelValueを更新
 function handleChange(event) {
   // 選択された値を取得
-  const selectedValue = event.target.value;
+  // const selectedValue = event.target.value;
   // 親コンポーネントに選択された値を渡す
-  emit('update:modelValue', selectedValue);
+  // emit('update:modelValue', selectedValue);
+  const newValue = event.target.value;
+  selectedValue.value = newValue;
+  emit('update:modelValue', newValue);
 }
 
-
-const input = ref(null);
-const selectedValue = ref(null);
 
 // フォームの初期値を設定
 onMounted(() => {
@@ -46,8 +53,6 @@ defineExpose({ focus: () => input.value.focus() });
   <div class="col-span-6 sm:col-span-2">
     <div class="mb-2">
       <p class="text-sm font-medium text-gray-700">{{ props.label }}</p>
-      <p>{{ props.modelValue }}</p>
-      
     </div>
     <select 
       :id="id" 
@@ -56,8 +61,8 @@ defineExpose({ focus: () => input.value.focus() });
       ref="selectBox" 
       @change="handleChange" 
     >
-      <option :value="0">選択してください</option>
-      <option v-for="option in props.options" :key="option" :value="option">{{ option }} </option>
+      <option :value="null">選択してください</option>
+      <option v-for="(option, index) in props.options" :key="option" :value=" option.id">{{ option[column] }}</option>
     </select>
     <InputError :message="error" class="mt-2" />
   </div>

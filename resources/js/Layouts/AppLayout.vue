@@ -27,6 +27,27 @@ const switchToTeam = (team) => {
     });
 };
 
+// フラッシュメッセージに関する定義
+// const successMessage = ref('');
+// const errorMessage = ref('');
+
+// 成功メッセージを表示する関数
+// const showSuccessMessage = (message) => {
+//     successMessage.value = message;
+//     setTimeout(() => {
+//         successMessage.value = '';
+//     }, 5000); // 5秒後にメッセージを非表示にする
+// };
+
+// エラーメッセージを表示する関数
+// const showErrorMessage = (message) => {
+//     errorMessage.value = message;
+//     setTimeout(() => {
+//         errorMessage.value = '';
+//     }, 5000); // 5秒後にメッセージを非表示にする
+// };
+
+// ログアウトに関する定義
 const logout = () => {
     router.post(route('logout'));
 };
@@ -39,7 +60,7 @@ const logout = () => {
         <Banner />
 
         <div class="min-h-screen bg-gray-100">
-            <nav class="bg-white border-b border-gray-100">
+          <nav class="bg-white border-b border-gray-100">
                 <!-- Primary Navigation Menu -->
                 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div class="flex justify-between h-16">
@@ -276,6 +297,7 @@ const logout = () => {
                                     </form>
                                 </template>
                             </template>
+
                         </div>
                     </div>
                 </div>
@@ -294,4 +316,14 @@ const logout = () => {
             </main>
         </div>
     </div>
+
+    <!-- 成功メッセージ -->
+    <!-- <div v-if="successMessage" class="success-message">
+      {{ successMessage }}
+    </div> -->
+
+    <!-- エラーメッセージ -->
+    <!-- <div v-if="errorMessage" class="error-message">
+      {{ errorMessage }}
+    </div> -->
 </template>

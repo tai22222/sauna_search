@@ -67,4 +67,12 @@ class User extends Authenticatable
     protected $appends = [
         'profile_photo_url',
     ];
+
+
+    // users テーブルと関連づけられた genders テーブルのデータを取得するための関係を定義する
+    public function gender()
+    {
+        // users テーブルの gender_id カラムを参照して、genders テーブルの id カラムと関連づける
+        return $this->belongsTo(Gender::class);
+    }
 }

@@ -15,6 +15,7 @@ import Welcome from '@/Components/Welcome.vue';
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
                 <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg">
                     <p>新規ページ作成中(一覧表示)</p>
+                    
                 </div>
             </div>
         </div>
