@@ -18,3 +18,16 @@ export default defineConfig({
         }),
     ],
 });
+
+
+
+// vendor/inertiajs/inertia-laravel/src/Response.phpの一部ですが
+// .$request->getRequestUri(),部分が不要で修正したので注意
+// URLの重複表記を解決するため
+
+// $page = [
+//   'component' => $this->component,
+//   'props' => $props,
+//   'url' => $request->getBaseUrl().$request->getRequestUri(),
+//   'version' => $this->version,
+// ];
