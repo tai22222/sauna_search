@@ -6,6 +6,8 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Laravel\Jetstream\Http\Controllers\Inertia\UserProfileController;
 
+use Inertia\Inertia;
+
 class UserController extends UserProfileController
 {
     // ここに必要なカスタムロジックを追加します

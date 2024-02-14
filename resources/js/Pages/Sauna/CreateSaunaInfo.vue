@@ -31,6 +31,7 @@ const props = defineProps({
 // フォームの各入力項目に対応するPOSTデータ(saunasテーブル、saunas_infosテーブル、water_bathsテーブル)
 const form = useForm({
     _method: 'POST',
+    user_id: props.user.id,
 
     facility_name: '',
     facility_type_id:'',
@@ -110,9 +111,9 @@ const updateProfileInformation = () => {
     }
 
     form.post(route('sauna.store'), {
-        // errorBag: 'updateProfileInformation',
-        // preserveScroll: true,
-        // onSuccess: () => clearPhotoFileInput(),
+        errorBag: 'updateProfileInformation',
+        preserveScroll: true,
+        onSuccess: () => clearPhotoFileInput(),
     });
 };
 

@@ -16,7 +16,6 @@
         @inertiaHead
     </head>
     <body class="font-sans antialiased">
-      <a href="http://localhost/saunas">こちらへ</a>
         @inertia
     </body>
 </html>

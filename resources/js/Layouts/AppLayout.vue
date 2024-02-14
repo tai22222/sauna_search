@@ -1,6 +1,6 @@
 <script setup>
 
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 
 // vendorからコンポーネントの読み込み
 import { Head, Link, router } from '@inertiajs/vue3';
@@ -27,30 +27,35 @@ const switchToTeam = (team) => {
     });
 };
 
-// フラッシュメッセージに関する定義
+// // フラッシュメッセージに関する定義
 // const successMessage = ref('');
 // const errorMessage = ref('');
 
-// 成功メッセージを表示する関数
-// const showSuccessMessage = (message) => {
-//     successMessage.value = message;
-//     setTimeout(() => {
-//         successMessage.value = '';
-//     }, 5000); // 5秒後にメッセージを非表示にする
+// // フラッシュメッセージをセットアップする関数
+// const setupFlashMessages = () => {
+//   // 成功メッセージの取得
+//   const successMsg = "{{ session('success') }}";
+//   if (successMsg) {
+//     successMessage.value = successMsg;
+//   }
+  
+//   // エラーメッセージの取得
+//   const errorMsg = "{{ session('error') }}";
+//   if (errorMsg) {
+//     errorMessage.value = errorMsg;
+//   }
 // };
 
-// エラーメッセージを表示する関数
-// const showErrorMessage = (message) => {
-//     errorMessage.value = message;
-//     setTimeout(() => {
-//         errorMessage.value = '';
-//     }, 5000); // 5秒後にメッセージを非表示にする
-// };
+// // コンポーネントがマウントされた時にフラッシュメッセージをセットアップする
+// onMounted(() => {
+//   setupFlashMessages();
+// });
 
 // ログアウトに関する定義
 const logout = () => {
     router.post(route('logout'));
 };
+
 </script>
 
 <template>
@@ -310,20 +315,19 @@ const logout = () => {
                 </div>
             </header>
 
+            <!-- フラッシュメッセージの表示 -->
+            <!-- <div v-if="successMessage" class="alert alert-success" role="alert">
+              {{ successMessage }}
+            </div>
+            <div v-if="errorMessage" class="alert alert-danger" role="alert">
+              {{ errorMessage }}
+            </div> -->
+            
+
             <!-- Page Content -->
             <main>
                 <slot />
             </main>
         </div>
     </div>
-
-    <!-- 成功メッセージ -->
-    <!-- <div v-if="successMessage" class="success-message">
-      {{ successMessage }}
-    </div> -->
-
-    <!-- エラーメッセージ -->
-    <!-- <div v-if="errorMessage" class="error-message">
-      {{ errorMessage }}
-    </div> -->
 </template>

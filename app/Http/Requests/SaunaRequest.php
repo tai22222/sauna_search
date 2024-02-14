@@ -24,7 +24,7 @@ class SaunaRequest extends FormRequest
     public function rules(FormRequest $request)
     {
       logger($request);
-      logger("=======================");
+      logger("==========FormRequest=============");
       return [
         'facility_name' => ['required', 'string', 'max:255'],
         'facility_type_id' => ['required', 'integer'],
