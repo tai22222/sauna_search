@@ -41,6 +41,7 @@ defineProps({
                       :waterBath="$page.props.waterBaths"
                       :bathType="$page.props.bathsTypes"
                       :waterType="$page.props.waterTypes"
+                      :businessHour="$page.props.businessHours"
                     />
 
                     <SectionBorder />

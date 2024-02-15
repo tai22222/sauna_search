@@ -55,5 +55,5 @@ defineExpose({ focus: () => input.value.focus() });
     <InputError :message="error" class="mt-2" />
   </div>
   <!-- <p>{{ initialValue }}</p> -->
-  <p>{{ selectedValue }}</p>
+  <!-- <p>{{ selectedValue }}</p> -->
 </template>

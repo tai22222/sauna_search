@@ -26,6 +26,7 @@ const props = defineProps({
     waterBath: Object,
     bathType: Object,
     waterType: Object,
+    businessHour: Object,
 });
 
 // フォームの各入力項目に対応するPOSTデータ(saunasテーブル、saunas_infosテーブル、water_bathsテーブル)
@@ -33,6 +34,7 @@ const form = useForm({
     _method: 'POST',
     user_id: props.user.id,
 
+    // サウナ情報に関する入力項目
     facility_name: '',
     facility_type_id:'',
     usage_type_id:'',
@@ -47,6 +49,7 @@ const form = useForm({
     min_fee:'',
     fee_text:'',
 
+    // サウナに関する入力項目
     sauna_type_id:'',
     stove_type_id:'',
     heat_type_id:'',
@@ -54,16 +57,48 @@ const form = useForm({
     capacity_sauna:'',
     additional_info_sauna:'',
 
+    // 水風呂に関する入力項目
     bath_type_id:'',
     water_type_id:'',
     temperature_water:'',
     capacity_water:'',
     deep_water:'',
     additional_info_water:'',
+
+    // 各曜日の入力項目
+    day_of_week_mon: '',
+    opening_time_mon: '',
+    closing_time_mon: '',
+    is_closed_mon: false,
+    day_of_week_tue: '',
+    opening_time_tue: '',
+    closing_time_tue: '',
+    is_closed_tue: false,
+    day_of_week_wed: '',
+    opening_time_wed: '',
+    closing_time_wed: '',
+    is_closed_wed: false,
+    day_of_week_thu: '',
+    opening_time_thu: '',
+    closing_time_thu: '',
+    is_closed_thu: false,
+    day_of_week_fri: '',
+    opening_time_fri: '',
+    closing_time_fri: '',
+    is_closed_fri: false,
+    day_of_week_sat: '',
+    opening_time_sat: '',
+    closing_time_sat: '',
+    is_closed_sat: false,
+    day_of_week_sun: '',
+    opening_time_sun: '',
+    closing_time_sun: '',
+    is_closed_sun: false,
+
 });
 
 // 選択肢として用意
-const { facilityTypes, usageTypes, prefectures, saunaTypes, stoveTypes, heatTypes, waterTypes, bathTypes } = usePage().props;
+const { facilityTypes, usageTypes, prefectures, saunaTypes, stoveTypes, heatTypes, waterTypes, bathTypes, businessHour } = usePage().props;
 
 // 施設タイプ
 const facilityTypesArray = Array.isArray(facilityTypes) ? facilityTypes : [facilityTypes];
@@ -91,7 +126,7 @@ const selectedWaterType = ref(null)
 const bathTypeArray = Array.isArray(bathTypes) ? bathTypes : [bathTypes];
 const selectedBathType = ref(null)
 
-// setup ブロック内で waterOptions を定義(DBで定義ではない)
+// waterOptions を定義(DBで定義ではない)
 const waterDepthOptions = ref([
     { id: 1, type_name: '20 ~ 40cm(すね)' },
     { id: 2, type_name: '40 ~ 60cm(ひざ)' },
@@ -101,6 +136,33 @@ const waterDepthOptions = ref([
     { id: 6, type_name: '140cm ~ (肩)' }
 ]);
 
+// 営業時間の曜日定義
+const daysOfWeek = ref({
+  '月': 'mon',
+  '火': 'tue',
+  '水': 'wed',
+  '木': 'thu',
+  '金': 'fri',
+  '土': 'sat',
+  '日': 'sun'
+});
+
+// 選択された曜日の取得
+const selectedDay = ref(null);
+
+// 選択された曜日をセットする関数
+const selectDay = (day) => {
+  selectedDay.value = day;
+};
+
+// 営業時間の初期値を設定
+const initialBusinessHour = Object.keys(daysOfWeek).map(dayName => ({
+  day_of_week: daysOfWeek[dayName],
+  is_closed: false,
+  opening_time: '',
+  closing_time: '',
+}));
+
 const verificationLinkSent = ref(null);
 const photoPreview = ref(null);
 const photoInput = ref(null);
@@ -109,6 +171,12 @@ const updateProfileInformation = () => {
     if (photoInput.value) {
         form.photo = photoInput.value.files[0];
     }
+
+    // input タグの内容をフォームデータに追加
+    Object.keys(daysOfWeek).forEach(day => {
+      const dayAbbreviation = daysOfWeek[day];
+      form[`day_of_week_${dayAbbreviation}`] = day;
+    });
 
     form.post(route('sauna.store'), {
         // errorBag: 'updateProfileInformation',
@@ -359,11 +427,87 @@ JR「大阪」駅、地下鉄・阪急・阪神「梅田」駅より東へ徒歩
                 <InputError :message="form.errors.website_url" class="mt-2" />
             </div>
 
-            <!-- Business_hours.Saunas business_hours hours 曜日ごとに(foreach) -->
-              <!-- Business_hours day_of_week integer -->
-              <!-- Business_hours opening_time -->
-              <!-- Business_hours closing_time -->
-              <!-- Business_hours is_closed boolean -->
+            <!-- Business_hours.Saunas business_hours hours 曜日ごとに(for) -->
+            <div class="col-span-6 sm:col-span-6">
+              <!-- <div class="grid grid-cols-7">
+                <div class="inline-block p-4 mb-6 text-center bg-gray-200 text-gray-600 font-bold border border-gray-600 rounded-tl-md rounded-bl-md ">
+                  月
+                </div>
+                  <div class="inline-block p-4 mb-6 text-center bg-gray-200 text-gray-600 font-bold border border-gray-600">
+                  火
+                </div>
+                <div class="inline-block p-4 mb-6 text-center bg-gray-200 text-gray-600 font-bold border border-gray-600 ">
+                  水
+                </div>
+                <div class="inline-block p-4 mb-6 text-center bg-gray-200 text-gray-600 font-bold border border-gray-600 ">
+                  木
+                </div>
+                <div class="inline-block p-4 mb-6 text-center bg-gray-200 text-gray-600 font-bold border border-gray-600 ">
+                  金
+                </div>
+                <div class="inline-block p-4 mb-6 text-center bg-gray-200 text-gray-600 font-bold border border-gray-600 ">
+                  土
+                </div>
+                <div class="inline-block p-4 mb-6 text-center bg-gray-200 text-gray-600 font-bold border border-gray-600 rounded-tr-md rounded-br-md">
+                  日
+                </div>
+              </div> -->
+
+              <div class="grid grid-cols-7">
+                <div v-for="(day, index) in daysOfWeek" 
+                  :key="index" 
+                  @click="selectDay(day)" 
+                  class="inline-block p-4 mb-6 text-center bg-gray-200 text-gray-600 font-bold border border-gray-600"
+                  :class="{ 'bg-blue-500': selectedDay === day }
+                ">
+                  {{ index }}
+                </div>
+              </div>
+
+              <div class="md:grid md:grid-cols-6 md:gap-6">
+                <!-- 曜日ごとのビジネスアワーの入力フィールドを表示 -->
+                <div class="col-span-6"
+                     v-for="(day, index) in daysOfWeek" 
+                     :key="index"
+                     v-show="selectedDay === day">
+                  <div>
+                    <!-- 定休日のチェックボックス -->
+                    <input 
+                      type="checkbox"
+                      v-model="form['is_closed_' + day]"
+                      class="m-4 form-checkbox h-8 w-8 text-gray-600 rounded border-none focus:ring-0 shadow-none checked:bg-gray-600 bg-gray-200"
+                    >
+                    <label class="inline-block text-center text-l">定休日</label>
+                  </div>
+
+                  <div class="grid grid-cols-6 md:gap-6">
+                    <div class="col-span-2">
+                      <!-- 開始時間の入力フィールド -->
+                      <InputLabel for="'opening_time_' + day" value="営業開始時間" />
+                        <TextInput
+                            id="'opening_time_' + day"
+                            v-model="form['opening_time_' + day]"
+                            type="time"
+                            class="mt-1 block w-full"
+                            placeholder="例： 12:00"
+                        />
+                    </div>
+                    <span class="flex justify-center items-center h-full">〜</span>
+                    <div class="col-span-2">
+                      <!-- 終了時間の入力フィールド -->
+                      <InputLabel for="'closing_time_' + day" value="営業終了時間" />
+                        <TextInput
+                            id="'closing_time_' + day"
+                            v-model="form['closing_time_' + day]"
+                            type="time"
+                            class="mt-1 block w-full"
+                            placeholder="例： 12:00"
+                        />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
 
             <!-- Saunas business_hours_detail textarea -->
             <div class="col-span-6 sm:col-span-4">
