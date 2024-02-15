@@ -20,7 +20,7 @@ defineProps({
     <AppLayout title="Sauna施設情報">
         <template #header>
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                Profile
+                サウナ施設
             </h2>
         </template>
 
@@ -46,28 +46,8 @@ defineProps({
                     <SectionBorder />
                 </div>
 
-                <!-- <div v-if="$page.props.jetstream.canUpdatePassword">
-                    <UpdatePasswordForm class="mt-10 sm:mt-0" />
+                <!-- todo 管理者権限の時にサウナ情報削除ページを表示 -->
 
-                    <SectionBorder />
-                </div> -->
-
-                <!-- <div v-if="$page.props.jetstream.canManageTwoFactorAuthentication">
-                    <TwoFactorAuthenticationForm
-                        :requires-confirmation="confirmsTwoFactorAuthentication"
-                        class="mt-10 sm:mt-0"
-                    />
-
-                    <SectionBorder />
-                </div> -->
-
-                <!-- <LogoutOtherBrowserSessionsForm :sessions="sessions" class="mt-10 sm:mt-0" /> -->
-
-                <!-- <template v-if="$page.props.jetstream.hasAccountDeletionFeatures">
-                    <SectionBorder />
-
-                    <DeleteUserForm class="mt-10 sm:mt-0" />
-                </template> -->
             </div>
         </div>
     </AppLayout>

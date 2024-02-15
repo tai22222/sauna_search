@@ -169,7 +169,7 @@ const clearPhotoFileInput = () => {
   <AppLayout title="Sauna施設情報">
       <template #header>
           <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-              Profile
+              サウナ施設新規追加
           </h2>
       </template>
 

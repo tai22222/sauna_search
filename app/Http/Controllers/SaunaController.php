@@ -30,8 +30,15 @@ class SaunaController extends Controller
 {
   // 一覧表示
   public function index(){
-    $sessionData = session()->all();
-    return Inertia::render('Sauna/Index', ['sessionData' => $sessionData]);
+    $saunas = Sauna::with('facilityType','usageType', 'prefecture')->get();
+    $saunaInfos = SaunaInfo::with('saunaType', 'stoveType', 'heatType')->get();
+    $waterBaths = WaterBath::with('bathType', 'waterType')->get();
+    
+    return Inertia::render('Sauna/Index', [
+      'saunas' => $saunas,
+      'saunaInfos' => $saunaInfos,
+      'waterBaths' => $waterBaths,
+    ]);
   }
 
 

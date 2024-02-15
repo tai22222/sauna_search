@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, defineProps } from 'vue';
-
 import { Link, router, useForm, usePage } from '@inertiajs/vue3';
+
 import ActionMessage from '@/Components/ActionMessage.vue';
 import FormSection from '@/Components/FormSection.vue';
 import InputError from '@/Components/InputError.vue';
@@ -111,8 +111,8 @@ const updateProfileInformation = () => {
     }
 
     form.post(route('sauna.store'), {
-        errorBag: 'updateProfileInformation',
-        preserveScroll: true,
+        // errorBag: 'updateProfileInformation',
+        // preserveScroll: true,
         onSuccess: () => clearPhotoFileInput(),
     });
 };
@@ -219,6 +219,8 @@ console.log(props);
 
                 <InputError :message="form.errors.photo" class="mt-2" />
             </div> -->
+
+            <!-- 項目数 施設情報(12項目)　サウナ情報(6項目)　水風呂情報(6項目)　画像 -->
             <h3 class="col-span-6 text-xl mb-4">・施設情報</h3>
             <!-- Facility_name input -->
             <div class="col-span-6 sm:col-span-4">
@@ -629,6 +631,7 @@ JR「大阪」駅、地下鉄・阪急・阪神「梅田」駅より東へ徒歩
 
         </template>
 
+        <!-- 保存ボタン -->
         <template #actions>
             <ActionMessage :on="form.recentlySuccessful" class="mr-3">
                 Saved.
