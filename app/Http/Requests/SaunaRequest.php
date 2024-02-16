@@ -3,6 +3,8 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Contracts\Validation\Validator;
+use Illuminate\Http\Exceptions\HttpResponseException;
 
 class SaunaRequest extends FormRequest
 {
@@ -83,6 +85,20 @@ class SaunaRequest extends FormRequest
         'opening_time_sun' => ['nullable', 'date_format:H:i'],
         'closing_time_sun' => ['nullable', 'date_format:H:i'],
         'is_closed_sun' => ['required', 'boolean'],
+
+        // 画像アップロード(一旦String型に設定)
+        'main_image_url' => ['required', 'mimetypes:image/jpeg,image/png', 'max:1024'],
+        'image1_url' =>  ['nullable', 'string'],
+        'image2_url' =>  ['nullable', 'string'],
+        'image3_url' =>  ['nullable', 'string'],
+        'image4_url' =>  ['nullable', 'string'],
+        'image5_url' =>  ['nullable', 'string'],
     ];
+    }
+    
+    protected function failedValidation(Validator $validator)
+    {
+        logger()->error('バリデーションエラーが発生しました:', $validator->errors()->all());
+        throw new HttpResponseException(response()->json(['errors' => $validator->errors()], 422));
     }
 }

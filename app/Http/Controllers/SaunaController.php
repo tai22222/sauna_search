@@ -20,6 +20,7 @@ use App\Models\WaterType;
 use App\Models\BathType;
 
 use App\Models\BusinessHour;
+use App\Models\ImagesFacility;
 
 // フォームのバリデーション(ミドルウェア)
 use App\Http\Requests\SaunaRequest;
@@ -92,9 +93,8 @@ class SaunaController extends Controller
 
   // 新規作成処理
   public function store(SaunaRequest $request){
-    // バリデーション後のリクエストの受け取り(SaunaRequest)
-    // Create.vueからフォームを受け取り、sauna_infosテーブル、water_bathsテーブル、business_hoursテーブル、images_facilitiesテーブルに振り分ける
-    // リクエストからデータを取得し、カラム名を変更
+    // Create.vueからSaunaRequestでバリデーション後の$requestの受け取り
+    // saunasテーブル、sauna_infosテーブル、water_bathsテーブル、business_hoursテーブル、images_facilitiesテーブルに振り分ける
     $saunaData = $request->only([
         'user_id','facility_name', 'facility_type_id', 'usage_type_id', 'prefecture_id',
         'address1', 'address2', 'address3', 'access_text', 'tel', 'website_url',
@@ -121,7 +121,18 @@ class SaunaController extends Controller
       'day_of_week_sun', 'opening_time_sun', 'closing_time_sun', 'is_closed_sun',
     ]);
 
-    // フォームで受け取ったカラム名をDBと合わせる
+    if ($request->hasFile('main_image_url')) {
+      // ファイルのアップロード処理を行う前に、ファイルを取得し、保存先のパスを取得する
+      $mainImagePath = $request->file('main_image_url')->store('sauna-images', 'public');
+  
+      // データを準備（ファイルのパスを含める）
+      $imagesFacilityData = $request->only([
+          'image1_url', 'image2_url', 'image3_url', 'image4_url', 'image5_url',
+      ]);
+      $imagesFacilityData['main_image_url'] = $mainImagePath;
+  }
+
+    // フォームで受け取ったカラム名をDBと合わせる(サウナ情報と水風呂情報に関して)
     $saunaInfoKeyMap = [
       'temperature_sauna' => 'temperature',
       'capacity_sauna' => 'capacity',
@@ -303,6 +314,7 @@ class SaunaController extends Controller
         }
     }
 
+
     // ログに配列を出力する
     logger($saunaData);
     logger('===========saunasテーブル挿入データ===========');
@@ -312,12 +324,12 @@ class SaunaController extends Controller
     logger('===========water_bathsテーブル挿入データ===========');
     logger($businessHourData);
     logger('===========business_hoursテーブル挿入データ===========');
-    logger($monBusinessHourData);
-    logger('===========月曜挿入データ===========');
-    logger($tueBusinessHourData);
-    logger('===========火曜テーブル挿入データ===========');
-    logger($wedBusinessHourData);
-    logger('===========水曜テーブル挿入データ===========');
+    // logger($monBusinessHourData);
+    // logger('===========月曜挿入データ===========');
+    // logger($tueBusinessHourData);
+    // logger('===========火曜テーブル挿入データ===========');
+    // logger($wedBusinessHourData);
+    // logger('===========水曜テーブル挿入データ===========');
 
     // DBの挿入とトランザクションの設定
     DB::beginTransaction();

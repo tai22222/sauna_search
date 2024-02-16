@@ -95,10 +95,17 @@ const form = useForm({
     closing_time_sun: '',
     is_closed_sun: false,
 
+    // 画像のアップロード
+    main_image_url: '',
+    image1_url: '',
+    image2_url: '',
+    image3_url: '',
+    image4_url: '',
+    image5_url: '',
 });
 
 // 選択肢として用意
-const { facilityTypes, usageTypes, prefectures, saunaTypes, stoveTypes, heatTypes, waterTypes, bathTypes, businessHour } = usePage().props;
+const { facilityTypes, usageTypes, prefectures, saunaTypes, stoveTypes, heatTypes, waterTypes, bathTypes } = usePage().props;
 
 // 施設タイプ
 const facilityTypesArray = Array.isArray(facilityTypes) ? facilityTypes : [facilityTypes];
@@ -148,7 +155,7 @@ const daysOfWeek = ref({
 });
 
 // 選択された曜日の取得
-const selectedDay = ref(null);
+const selectedDay = ref('mon');
 
 // 選択された曜日をセットする関数
 const selectDay = (day) => {
@@ -163,21 +170,27 @@ const initialBusinessHour = Object.keys(daysOfWeek).map(dayName => ({
   closing_time: '',
 }));
 
-const verificationLinkSent = ref(null);
+// プレビュー表示のための画像
 const photoPreview = ref(null);
+// 画像を選択した時の双方バインディングデータ
 const photoInput = ref(null);
+// DB挿入画像の配列
+const imageUrls = ref(['main_image_url', 'image1_url' , 'image2_url', 'image3_url', 'image4_url', 'image5_url']);
 
-const updateProfileInformation = () => {
+// フォームを送信した時に実行(preventされるのでinputタグは手でformの中身を更新する必要あり)
+const updateSaunaInformation = () => {
     if (photoInput.value) {
-        form.photo = photoInput.value.files[0];
+        form.main_image_url = photoInput.value.files[0];
     }
 
-    // input タグの内容をフォームデータに追加
-    Object.keys(daysOfWeek).forEach(day => {
-      const dayAbbreviation = daysOfWeek[day];
+    // input タグの内容をフォームデータに追加(day_of_week_monに月など)
+    Object.keys(daysOfWeek.value).forEach(day => {
+      const dayAbbreviation = daysOfWeek.value[day];
+      // console.log(dayAbbreviation);
       form[`day_of_week_${dayAbbreviation}`] = day;
     });
 
+    // フォームの内容をSaunaControllerのstoreアクションへ送信
     form.post(route('sauna.store'), {
         // errorBag: 'updateProfileInformation',
         // preserveScroll: true,
@@ -185,44 +198,70 @@ const updateProfileInformation = () => {
     });
 };
 
-// const sendEmailVerification = () => {
-//     verificationLinkSent.value = true;
-// };
-
 const selectNewPhoto = () => {
     photoInput.value.click();
 };
 
+// 画像を選択したときに実行
 const updatePhotoPreview = () => {
-    const photo = photoInput.value.files[0];
-
-    if (! photo) return;
+    const main_image_url = photoInput.value.files[0];
+  // console.log(main_image_url);
+    if (! main_image_url) return;
 
     const reader = new FileReader();
 
     reader.onload = (e) => {
         photoPreview.value = e.target.result;
+        // console.log(e);
+        // console.log(photoPreview.value);
     };
 
-    reader.readAsDataURL(photo);
+    reader.readAsDataURL(main_image_url);
+    console.log('画像変更時');
+    console.log(photoPreview);
 };
+
+// 画像を選択したときに実行(for対応)
+const selectImage = (event, field) => {
+  const file = event.target.files[0];
+  const reader = new FileReader();
+  reader.onload = () => {
+    // 画像のプレビューを表示
+    imageUrls.value.push(reader.result);
+    // formデータに画像のURLを設定
+    form.value[field] = reader.result;
+  };
+  reader.readAsDataURL(file);
+};
+
 
 const deletePhoto = () => {
-    router.delete(route('current-user-photo.destroy'), {
-        preserveScroll: true,
-        onSuccess: () => {
-            photoPreview.value = null;
-            clearPhotoFileInput();
-        },
-    });
+    photoPreview.value = '';
+    clearPhotoFileInput();
+    console.log('画像クリア時');
+    console.log(photoPreview);
 };
 
+// プレビュー削除時にinputデータも削除
 const clearPhotoFileInput = () => {
     if (photoInput.value?.value) {
         photoInput.value.value = null;
     }
 };
-console.log(props);
+
+// 画像を削除するときに実行
+const deleteImage = (index) => {
+  imageUrls.value.splice(index, 1);
+  // 画像のURLをformデータから削除
+  for (const key in form.value) {
+    if (form.value[key] === imageUrls.value[index]) {
+      form.value[key] = '';
+      break;
+    }
+  }
+};
+// console.log(props);
+// console.log(photoPreview);
 </script>
 
 <template>
@@ -235,7 +274,7 @@ console.log(props);
     </div>
 
      <!-- 施設情報入力 -->
-    <FormSection @submitted="updateProfileInformation">
+    <FormSection @submitted="updateSaunaInformation">
         <template #title>
             【施設情報入力】
         </template>
@@ -245,54 +284,11 @@ console.log(props);
         </template>
 
         <template #form>
-            <!-- プロフィール写真 -->
-            <!-- <div v-if="$page.props.jetstream.managesProfilePhotos" class="col-span-6 sm:col-span-4"> -->
-                <!-- プロフィール写真のinput -->
-                <!-- <input
-                    ref="photoInput"
-                    type="file"
-                    class="hidden"
-                    @change="updatePhotoPreview"
-                >
-
-                <InputLabel for="photo" value="アイコン画像" /> -->
-
-                <!-- 現在のプロフィール写真 -->
-                <!-- <div v-show="! photoPreview" class="mt-2">
-                    <img :src="user.profile_photo_url" :alt="user.name" class="rounded-full h-20 w-20 object-cover">
-
-                </div> -->
-
-                <!-- 新しいのプロフィール写真のプレビュー -->
-                <!-- <div v-show="photoPreview" class="mt-2">
-                    <span
-                        class="block rounded-full w-20 h-20 bg-cover bg-no-repeat bg-center"
-                        :style="'background-image: url(\'' + photoPreview + '\');'"
-                    />
-                </div> -->
-
-                <!-- プロフィール画像追加・削除ボタン -->
-                <!-- <SecondaryButton class="mt-2 mr-2" type="button" @click.prevent="selectNewPhoto">
-                    画像を選択
-                </SecondaryButton>
-
-                <SecondaryButton
-                    v-if="user.profile_photo_path"
-                    type="button"
-                    class="mt-2"
-                    @click.prevent="deletePhoto"
-                >
-                    削除
-                </SecondaryButton>
-
-                <InputError :message="form.errors.photo" class="mt-2" />
-            </div> -->
-
             <!-- 項目数 施設情報(12項目)　サウナ情報(6項目)　水風呂情報(6項目)　画像 -->
             <h3 class="col-span-6 text-xl mb-4">・施設情報</h3>
             <!-- Facility_name input -->
             <div class="col-span-6 sm:col-span-4">
-                <InputLabel for="facility_name" value="施設名" />
+                <InputLabel for="facility_name" value="施設名 (※必須)" />
                 <TextInput
                     id="facility_name"
                     v-model="form.facility_name"
@@ -308,7 +304,7 @@ console.log(props);
             <div class="col-span-6 sm:col-span-4">
                 <SelectBox 
                   id="facility_type" 
-                  label="施設タイプ" 
+                  label="施設タイプ (※必須)" 
                   v-model="form.facility_type_id"
                   :initialValue="selectedFacilityType" 
                   :options="facilityTypesArray" 
@@ -320,7 +316,7 @@ console.log(props);
             <div class="col-span-6 sm:col-span-4">
                 <SelectBox 
                   id="usage_type" 
-                  label="利用形態" 
+                  label="利用形態 (※必須)" 
                   v-model="form.usage_type_id"
                   :initialValue="selectedUsageType" 
                   :options="usageTypeArray" 
@@ -328,12 +324,11 @@ console.log(props);
                 />
             </div>
 
-            <!-- Saunas.Genders Gender input 不要 -->
             <!-- Saunas.Prefectures Prefecture select -->
             <div class="col-span-3 sm:col-span-3">
                 <SelectBox 
                   id="prefecture_id" 
-                  label="都道府県" 
+                  label="都道府県 (※必須)" 
                   column="name"
                   v-model="form.prefecture_id"
                   :initialValue="selectedPrefecture" 
@@ -344,7 +339,7 @@ console.log(props);
 
             <!-- Saunas Address1 input -->
             <div class="col-span-6 sm:col-span-4">
-                <InputLabel for="address1" value="住所1" />
+                <InputLabel for="address1" value="住所1 (※必須)" />
                 <TextInput
                     id="address1"
                     v-model="form.address1"
@@ -428,53 +423,28 @@ JR「大阪」駅、地下鉄・阪急・阪神「梅田」駅より東へ徒歩
             </div>
 
             <!-- Business_hours.Saunas business_hours hours 曜日ごとに(for) -->
-            <div class="col-span-6 sm:col-span-6">
-              <!-- <div class="grid grid-cols-7">
-                <div class="inline-block p-4 mb-6 text-center bg-gray-200 text-gray-600 font-bold border border-gray-600 rounded-tl-md rounded-bl-md ">
-                  月
-                </div>
-                  <div class="inline-block p-4 mb-6 text-center bg-gray-200 text-gray-600 font-bold border border-gray-600">
-                  火
-                </div>
-                <div class="inline-block p-4 mb-6 text-center bg-gray-200 text-gray-600 font-bold border border-gray-600 ">
-                  水
-                </div>
-                <div class="inline-block p-4 mb-6 text-center bg-gray-200 text-gray-600 font-bold border border-gray-600 ">
-                  木
-                </div>
-                <div class="inline-block p-4 mb-6 text-center bg-gray-200 text-gray-600 font-bold border border-gray-600 ">
-                  金
-                </div>
-                <div class="inline-block p-4 mb-6 text-center bg-gray-200 text-gray-600 font-bold border border-gray-600 ">
-                  土
-                </div>
-                <div class="inline-block p-4 mb-6 text-center bg-gray-200 text-gray-600 font-bold border border-gray-600 rounded-tr-md rounded-br-md">
-                  日
-                </div>
-              </div> -->
-
+            <div class="col-span-6 sm:col-span-4 pb-6 border rounded">
               <div class="grid grid-cols-7">
-                <div v-for="(day, index) in daysOfWeek" 
-                  :key="index" 
-                  @click="selectDay(day)" 
-                  class="inline-block p-4 mb-6 text-center bg-gray-200 text-gray-600 font-bold border border-gray-600"
-                  :class="{ 'bg-blue-500': selectedDay === day }
-                ">
-                  {{ index }}
+                <div v-for="(alfDay, day) in daysOfWeek" 
+                  :key="day" 
+                  @click="selectDay(alfDay)" 
+                  class="inline-block p-4 mb-6 text-center text-gray-600 font-bold border border-gray-400 border rounded"
+                  :class="[selectedDay === alfDay ? 'bg-blue-300' : 'bg-gray-200']">
+                  {{ day }}
                 </div>
               </div>
 
-              <div class="md:grid md:grid-cols-6 md:gap-6">
+              <div class="md:grid md:grid-cols-6 md:gap-6 ml-8">
                 <!-- 曜日ごとのビジネスアワーの入力フィールドを表示 -->
                 <div class="col-span-6"
-                     v-for="(day, index) in daysOfWeek" 
-                     :key="index"
-                     v-show="selectedDay === day">
+                     v-for="(alfDay, day) in daysOfWeek" 
+                     :key="day"
+                     v-show="selectedDay === alfDay">
                   <div>
                     <!-- 定休日のチェックボックス -->
                     <input 
                       type="checkbox"
-                      v-model="form['is_closed_' + day]"
+                      v-model="form['is_closed_' + alfDay]"
                       class="m-4 form-checkbox h-8 w-8 text-gray-600 rounded border-none focus:ring-0 shadow-none checked:bg-gray-600 bg-gray-200"
                     >
                     <label class="inline-block text-center text-l">定休日</label>
@@ -483,10 +453,10 @@ JR「大阪」駅、地下鉄・阪急・阪神「梅田」駅より東へ徒歩
                   <div class="grid grid-cols-6 md:gap-6">
                     <div class="col-span-2">
                       <!-- 開始時間の入力フィールド -->
-                      <InputLabel for="'opening_time_' + day" value="営業開始時間" />
+                      <InputLabel for="'opening_time_' + alfDay" value="営業開始時間" />
                         <TextInput
-                            id="'opening_time_' + day"
-                            v-model="form['opening_time_' + day]"
+                            id="'opening_time_' + alfDay"
+                            v-model="form['opening_time_' + alfDay]"
                             type="time"
                             class="mt-1 block w-full"
                             placeholder="例： 12:00"
@@ -495,10 +465,10 @@ JR「大阪」駅、地下鉄・阪急・阪神「梅田」駅より東へ徒歩
                     <span class="flex justify-center items-center h-full">〜</span>
                     <div class="col-span-2">
                       <!-- 終了時間の入力フィールド -->
-                      <InputLabel for="'closing_time_' + day" value="営業終了時間" />
+                      <InputLabel for="'closing_time_' + alfDay" value="営業終了時間" />
                         <TextInput
-                            id="'closing_time_' + day"
-                            v-model="form['closing_time_' + day]"
+                            id="'closing_time_' + alfDay"
+                            v-model="form['closing_time_' + alfDay]"
                             type="time"
                             class="mt-1 block w-full"
                             placeholder="例： 12:00"
@@ -556,6 +526,7 @@ JR「大阪」駅、地下鉄・阪急・阪神「梅田」駅より東へ徒歩
                 />
                 <InputError :message="form.errors.fee_text" class="mt-2" />
             </div>
+
 
             <div class="col-span-6 py-8">
               <div class="border-t border-gray-200" /> 
@@ -667,11 +638,11 @@ JR「大阪」駅、地下鉄・阪急・阪神「梅田」駅より東へ徒歩
                 <InputError :message="form.errors.additional_info_sauna" class="mt-2" />
             </div>
 
+
             <div class="col-span-6 py-8">
               <div class="border-t border-gray-200" /> 
             </div>
             <h3 class="col-span-6 text-xl mb-4">・水風呂情報</h3>
-
 
             <!-- Water_baths.Saunas bath_type select -->
             <div class="col-span-6 sm:col-span-4">
@@ -765,13 +736,56 @@ JR「大阪」駅、地下鉄・阪急・阪神「梅田」駅より東へ徒歩
                 <InputError :message="form.errors.access_text_water" class="mt-2" />
             </div>
 
-            <!-- Images_facilities.Saunas main_image_url input -->
-            <!-- Images_facilities.Saunas image1_url input -->
-            <!-- Images_facilities.Saunas image2_url input -->
-            <!-- Images_facilities.Saunas image3_url input -->
-            <!-- Images_facilities.Saunas image4_url input -->
-            <!-- Images_facilities.Saunas image5_url input -->
 
+            <div class="col-span-6 py-8">
+              <div class="border-t border-gray-200" /> 
+            </div>
+            <h3 class="col-span-6 text-xl mb-4">・画像登録</h3>
+
+            <!-- 画像アップロード 6枚(main1枚と1~5のimage) -->
+            <div class="col-span-6 sm:col-span-4">
+                <!-- 施設写真のinput -->
+                <input
+                    ref="photoInput"
+                    type="file"
+                    class="hidden"
+                    @change="updatePhotoPreview"
+                >
+
+                <InputLabel for="main_image_url" value="サウナメイン画像" />
+
+                <!-- 初期施設写真 -->
+                <div v-show="! photoPreview" class="mt-2">
+                    <img 
+                      :src="'../storage/default-images/no_image.jpg'"
+                      :alt="sauna.facility_name"
+                      class="rounded h-48 w-48 object-cover">
+                </div>
+
+                <!-- 挿入画像のプレビュー -->
+                <div v-show="photoPreview" class="mt-2">
+                    <span
+                        class="block rounded w-48 h-48 bg-cover bg-no-repeat bg-center"
+                        :style="'background-image: url(\'' + photoPreview + '\');'"
+                    />
+                </div>
+
+                <!-- 施設画像追加・削除ボタン -->
+                <SecondaryButton class="mt-2 mr-2" type="button" @click.prevent="selectNewPhoto">
+                    画像を選択
+                </SecondaryButton>
+
+                <SecondaryButton
+                    v-if="photoPreview"
+                    type="button"
+                    class="mt-2 bg-red-300"
+                    @click.prevent="deletePhoto"
+                >
+                    削除
+                </SecondaryButton>
+
+                <InputError :message="form.errors.photo" class="mt-2" />
+            </div>
 
         </template>
 

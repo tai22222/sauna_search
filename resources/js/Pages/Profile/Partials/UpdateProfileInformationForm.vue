@@ -39,18 +39,6 @@ const genderOptions = ref([
     { value: 2, label: '女性' },
 ]);
 
-// const genders = ref([]);
-
-// ラジオボタンの選択肢として使うためにgendersデータをgenderOptionsにマッピング
-// const genderOptions = computed(() => {
-//   return genders.value.map(gender => {
-//     return {
-//       value: gender.id,
-//       label: gender.name
-//     };
-//   });
-// });
-
 // 西暦の定義
 const years = ref([]);
 // 年の選択肢を生成 (1900年から現在の年まで)
