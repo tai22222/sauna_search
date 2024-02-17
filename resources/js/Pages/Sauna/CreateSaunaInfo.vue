@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, defineProps } from 'vue';
+import { ref, computed, defineProps, onMounted  } from 'vue';
 import { Link, router, useForm, usePage } from '@inertiajs/vue3';
 
 import ActionMessage from '@/Components/ActionMessage.vue';
@@ -154,7 +154,7 @@ const daysOfWeek = ref({
   '日': 'sun'
 });
 
-// 選択された曜日の取得
+// 選択された曜日の取得(初期選択mon)
 const selectedDay = ref('mon');
 
 // 選択された曜日をセットする関数
@@ -162,20 +162,23 @@ const selectDay = (day) => {
   selectedDay.value = day;
 };
 
-// 営業時間の初期値を設定
-const initialBusinessHour = Object.keys(daysOfWeek).map(dayName => ({
-  day_of_week: daysOfWeek[dayName],
-  is_closed: false,
-  opening_time: '',
-  closing_time: '',
-}));
-
 // プレビュー表示のための画像
 const photoPreview = ref(null);
 // 画像を選択した時の双方バインディングデータ
 const photoInput = ref(null);
 // DB挿入画像の配列
-const imageUrls = ref(['main_image_url', 'image1_url' , 'image2_url', 'image3_url', 'image4_url', 'image5_url']);
+const imageInputs = ref([]);
+const imageUrls = ref([
+  { key: 'main_image_url', value: '' },
+  { key: 'image1_url', value: '' },
+  { key: 'image2_url', value: '' },
+  { key: 'image3_url', value: '' },
+  { key: 'image4_url', value: '' },
+  { key: 'image5_url', value: '' },
+]);
+
+// フォームデータのリアクティブなオブジェクトを作成
+// const form = reactive(initialFormValues);
 
 // フォームを送信した時に実行(preventされるのでinputタグは手でformの中身を更新する必要あり)
 const updateSaunaInformation = () => {
@@ -198,38 +201,33 @@ const updateSaunaInformation = () => {
     });
 };
 
-const selectNewPhoto = () => {
-    photoInput.value.click();
-};
+// マウント時にv-forしたinput要素(file、hidden)をimageInputsに追加
+onMounted(() => {
+  const fileInputs = document.querySelectorAll('input[type="file"].hidden');
+  fileInputs.forEach((input, index) => {
+    // input要素をimageInputsに追加
+    imageInputs.value.push(input);
+  });
+});
 
-// 画像を選択したときに実行
-const updatePhotoPreview = () => {
-    const main_image_url = photoInput.value.files[0];
-  // console.log(main_image_url);
-    if (! main_image_url) return;
-
-    const reader = new FileReader();
-
-    reader.onload = (e) => {
-        photoPreview.value = e.target.result;
-        // console.log(e);
-        // console.log(photoPreview.value);
-    };
-
-    reader.readAsDataURL(main_image_url);
-    console.log('画像変更時');
-    console.log(photoPreview);
+// 画像選択ボタンを押した時に、input要素を取得してクリック
+const selectNewPhoto = (index) => {
+  // 対応する input 要素を取得し、クリックイベントをトリガーする
+  const input = imageInputs.value[index];
+  if (input) {
+    input.click();
+  }
 };
 
 // 画像を選択したときに実行(for対応)
-const selectImage = (event, field) => {
+const selectImage = (event, field, index) => {
   const file = event.target.files[0];
   const reader = new FileReader();
   reader.onload = () => {
-    // 画像のプレビューを表示
-    imageUrls.value.push(reader.result);
     // formデータに画像のURLを設定
-    form.value[field] = reader.result;
+    form[field] = reader.result;
+    // プレビュー画像表示のためにimageUrlsのvalueを更新
+    imageUrls.value[index].value = form[field];
   };
   reader.readAsDataURL(file);
 };
@@ -249,19 +247,14 @@ const clearPhotoFileInput = () => {
     }
 };
 
-// 画像を削除するときに実行
-const deleteImage = (index) => {
-  imageUrls.value.splice(index, 1);
-  // 画像のURLをformデータから削除
-  for (const key in form.value) {
-    if (form.value[key] === imageUrls.value[index]) {
-      form.value[key] = '';
-      break;
-    }
-  }
+// 画像を削除するときに実行(for対応)
+const deleteImage = (field, index) => {
+    form[field] = '';
+    // プレビュー画像表示のためにimageUrlsのvalueを更新
+    imageUrls.value[index].value = '';
 };
-// console.log(props);
-// console.log(photoPreview);
+
+console.log(props);
 </script>
 
 <template>
@@ -737,55 +730,63 @@ JR「大阪」駅、地下鉄・阪急・阪神「梅田」駅より東へ徒歩
             </div>
 
 
+
             <div class="col-span-6 py-8">
               <div class="border-t border-gray-200" /> 
             </div>
             <h3 class="col-span-6 text-xl mb-4">・画像登録</h3>
+          <!-- 画像アップロード 6枚(main1枚と1~5のimage) -->
+          <div class="col-span-6">
+                <!-- 施設メイン画像のinput -->
+                <div class="grid grid-cols-6 gap-6">
 
-            <!-- 画像アップロード 6枚(main1枚と1~5のimage) -->
-            <div class="col-span-6 sm:col-span-4">
-                <!-- 施設写真のinput -->
-                <input
-                    ref="photoInput"
-                    type="file"
-                    class="hidden"
-                    @change="updatePhotoPreview"
-                >
+                    <div v-for="(image, index) in imageUrls" key="index" class="col-span-6 md:col-span-2 sm:col-span-3">
+                      <input
+                        :ref="`imageInputs${index}`"
+                        type="file"
+                        class="hidden"
+                        @change="selectImage($event, image.key, index)"
+                      >
 
-                <InputLabel for="main_image_url" value="サウナメイン画像" />
+                      <InputLabel :for="`imageInput${image.key}`" value="サウナ画像" />
 
-                <!-- 初期施設写真 -->
-                <div v-show="! photoPreview" class="mt-2">
-                    <img 
-                      :src="'../storage/default-images/no_image.jpg'"
-                      :alt="sauna.facility_name"
-                      class="rounded h-48 w-48 object-cover">
+                      <!-- 初期施設写真 -->
+                      <div v-show="! image.value" class="mt-2 w-full">
+                          <img 
+                            :src="'../storage/default-images/no_image.jpg'"
+                            :alt="sauna.facility_name"
+                            class="rounded w-full object-cover">
+                      </div>
+
+                      <!-- 挿入画像のプレビュー -->
+                      <div v-show="image.value" class="mt-2">
+                          <span
+                              class="block rounded w-full bg-cover bg-no-repeat bg-center"
+                              :style="{ backgroundImage: `url(${image.value})`,
+                              paddingBottom: '100%' }"
+                          />
+                      </div>
+
+                      <!-- 施設画像追加・削除ボタン -->
+                      <SecondaryButton class="mt-2 mr-2" type="button" @click.prevent="selectNewPhoto(index)">
+                          画像を選択
+                      </SecondaryButton>
+
+                      <SecondaryButton
+                          v-if="image.value"
+                          type="button"
+                          class="mt-2 bg-red-300"
+                          @click.prevent="deleteImage(image.key, index)"
+                      >
+                          削除
+                      </SecondaryButton>
+
+                      <InputError :message="form.errors.photo" class="mt-2" />
+                    </div>
                 </div>
-
-                <!-- 挿入画像のプレビュー -->
-                <div v-show="photoPreview" class="mt-2">
-                    <span
-                        class="block rounded w-48 h-48 bg-cover bg-no-repeat bg-center"
-                        :style="'background-image: url(\'' + photoPreview + '\');'"
-                    />
-                </div>
-
-                <!-- 施設画像追加・削除ボタン -->
-                <SecondaryButton class="mt-2 mr-2" type="button" @click.prevent="selectNewPhoto">
-                    画像を選択
-                </SecondaryButton>
-
-                <SecondaryButton
-                    v-if="photoPreview"
-                    type="button"
-                    class="mt-2 bg-red-300"
-                    @click.prevent="deletePhoto"
-                >
-                    削除
-                </SecondaryButton>
-
-                <InputError :message="form.errors.photo" class="mt-2" />
+ 
             </div>
+
 
         </template>
 

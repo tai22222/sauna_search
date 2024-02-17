@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, defineProps } from 'vue';
+import { ref, computed, defineProps} from 'vue';
 
 import { Link, router, useForm, usePage } from '@inertiajs/vue3';
 import ActionMessage from '@/Components/ActionMessage.vue';
@@ -77,7 +77,6 @@ const updateDay = (type, value) => {
 const verificationLinkSent = ref(null);
 const photoPreview = ref(null);
 const photoInput = ref(null);
-
 const updateProfileInformation = () => {
     if (photoInput.value) {
         form.photo = photoInput.value.files[0];
@@ -96,6 +95,8 @@ const sendEmailVerification = () => {
 };
 
 const selectNewPhoto = () => {
+  console.log(photoInput);
+  console.log(photoInput.value);
     photoInput.value.click();
 };
 
