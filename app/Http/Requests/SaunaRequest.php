@@ -88,11 +88,11 @@ class SaunaRequest extends FormRequest
 
         // 画像アップロード(一旦String型に設定)
         'main_image_url' => ['required', 'mimetypes:image/jpeg,image/png', 'max:1024'],
-        'image1_url' =>  ['nullable', 'string'],
-        'image2_url' =>  ['nullable', 'string'],
-        'image3_url' =>  ['nullable', 'string'],
-        'image4_url' =>  ['nullable', 'string'],
-        'image5_url' =>  ['nullable', 'string'],
+        'image1_url' =>  ['nullable', 'mimetypes:image/jpeg,image/png', 'max:1024'],
+        'image2_url' =>  ['nullable', 'mimetypes:image/jpeg,image/png', 'max:1024'],
+        'image3_url' =>  ['nullable', 'mimetypes:image/jpeg,image/png', 'max:1024'],
+        'image4_url' =>  ['nullable', 'mimetypes:image/jpeg,image/png', 'max:1024'],
+        'image5_url' =>  ['nullable', 'mimetypes:image/jpeg,image/png', 'max:1024'],
     ];
     }
     

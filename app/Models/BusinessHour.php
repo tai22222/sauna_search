@@ -17,4 +17,9 @@ class BusinessHour extends Model
       'is_closed',
   ];
 
+  public function sauna()
+  {
+      return $this->belongsTo(Sauna::class);
+  }
+
 }

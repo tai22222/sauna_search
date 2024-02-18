@@ -20,6 +20,11 @@ class WaterBath extends Model
       'delete_flag'
     ];
 
+    public function sauna()
+    {
+        return $this->belongsTo(Sauna::class);
+    }
+
     // water_baths テーブルと関連づけられた bath_types テーブルのデータを取得するための関係を定義する
     public function bathType()
     {

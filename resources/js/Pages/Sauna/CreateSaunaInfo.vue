@@ -182,10 +182,6 @@ const imageUrls = ref([
 
 // フォームを送信した時に実行(preventされるのでinputタグは手でformの中身を更新する必要あり)
 const updateSaunaInformation = () => {
-    if (photoInput.value) {
-        form.main_image_url = photoInput.value.files[0];
-    }
-
     // input タグの内容をフォームデータに追加(day_of_week_monに月など)
     Object.keys(daysOfWeek.value).forEach(day => {
       const dayAbbreviation = daysOfWeek.value[day];
@@ -223,12 +219,13 @@ const selectNewPhoto = (index) => {
 const selectImage = (event, field, index) => {
   const file = event.target.files[0];
   const reader = new FileReader();
-  reader.onload = () => {
+  reader.onload = (e) => {
     // formデータに画像のURLを設定
-    form[field] = reader.result;
+    form[field] = file;
     // プレビュー画像表示のためにimageUrlsのvalueを更新
-    imageUrls.value[index].value = form[field];
+    imageUrls.value[index].value = reader.result;
   };
+
   reader.readAsDataURL(file);
 };
 

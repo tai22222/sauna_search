@@ -93,258 +93,42 @@ class SaunaController extends Controller
 
   // 新規作成処理
   public function store(SaunaRequest $request){
-    // Create.vueからSaunaRequestでバリデーション後の$requestの受け取り
-    // saunasテーブル、sauna_infosテーブル、water_bathsテーブル、business_hoursテーブル、images_facilitiesテーブルに振り分ける
-    $saunaData = $request->only([
-        'user_id','facility_name', 'facility_type_id', 'usage_type_id', 'prefecture_id',
-        'address1', 'address2', 'address3', 'access_text', 'tel', 'website_url',
-        'business_hours_detail', 'min_fee', 'fee_text'
-    ]);
-
-    $saunaInfoData = $request->only([
-        'sauna_type_id', 'stove_type_id', 'heat_type_id', 'temperature_sauna',
-        'capacity_sauna', 'additional_info_sauna'
-    ]);
-
-    $waterBathData = $request->only([
-        'bath_type_id', 'water_type_id', 'temperature_water', 'capacity_water',
-        'deep_water', 'additional_info_water'
-    ]);
-
-    $businessHourData = $request->only([
-      'day_of_week_mon', 'opening_time_mon', 'closing_time_mon', 'is_closed_mon',
-      'day_of_week_tue', 'opening_time_tue', 'closing_time_tue', 'is_closed_tue',
-      'day_of_week_wed', 'opening_time_wed', 'closing_time_wed', 'is_closed_wed',
-      'day_of_week_thu', 'opening_time_thu', 'closing_time_thu', 'is_closed_thu',
-      'day_of_week_fri', 'opening_time_fri', 'closing_time_fri', 'is_closed_fri',
-      'day_of_week_sat', 'opening_time_sat', 'closing_time_sat', 'is_closed_sat',
-      'day_of_week_sun', 'opening_time_sun', 'closing_time_sun', 'is_closed_sun',
-    ]);
-
-    if ($request->hasFile('main_image_url')) {
-      // ファイルのアップロード処理を行う前に、ファイルを取得し、保存先のパスを取得する
-      $mainImagePath = $request->file('main_image_url')->store('sauna-images', 'public');
-  
-      // データを準備（ファイルのパスを含める）
-      $imagesFacilityData = $request->only([
-          'image1_url', 'image2_url', 'image3_url', 'image4_url', 'image5_url',
-      ]);
-      $imagesFacilityData['main_image_url'] = $mainImagePath;
-  }
-
-    // フォームで受け取ったカラム名をDBと合わせる(サウナ情報と水風呂情報に関して)
-    $saunaInfoKeyMap = [
-      'temperature_sauna' => 'temperature',
-      'capacity_sauna' => 'capacity',
-      'additional_info_sauna' => 'additional_info',
-    ];
-    
-    foreach ($saunaInfoKeyMap as $oldKey => $newKey) {
-      if (isset($saunaInfoData[$oldKey])) {
-          $saunaInfoData[$newKey] = $saunaInfoData[$oldKey];
-          unset($saunaInfoData[$oldKey]);
-      }
-    }
-    
-    $waterBathKeyMap = [
-        'temperature_water' => 'temperature',
-        'capacity_water' => 'capacity',
-        'additional_info_water' => 'additional_info',
-    ];
-    
-    foreach ($waterBathKeyMap as $oldKey => $newKey) {
-      if (isset($waterBathData[$oldKey])) {
-          $waterBathData[$newKey] = $waterBathData[$oldKey];
-          unset($waterBathData[$oldKey]);
-      }
-    }
-
-    // 曜日ごとの営業時間を変数に詰め替えとtime型以外で渡ってきた時にtime型に変換
-    $monBusinessHourKeyMap = [
-      'day_of_week_mon' => 'day_of_week', 
-      'opening_time_mon' => 'opening_time', 
-      'closing_time_mon' => 'closing_time', 
-      'is_closed_mon' => 'is_closed',
-    ];
-
-    $monBusinessHourData = [];
-
-    foreach ($monBusinessHourKeyMap as $oldKey => $newKey) {
-        if (isset($businessHourData[$oldKey])) {
-            $value = $businessHourData[$oldKey];
-            // 時刻の値をフォーマットして MySQL の時間型に変換
-            if ($oldKey === 'opening_time_mon' || $oldKey === 'closing_time_mon') {
-                $formattedValue = date('H:i', strtotime($value));
-            } else {
-                $formattedValue = $value;
-            }
-            $monBusinessHourData[$newKey] = $formattedValue;
-        }
-    }
-
-    $tueBusinessHourKeyMap = [
-      'day_of_week_tue' => 'day_of_week', 
-      'opening_time_tue' => 'opening_time', 
-      'closing_time_tue' => 'closing_time', 
-      'is_closed_tue' => 'is_closed',
-    ];
-
-    $tueBusinessHourData = [];
-
-    foreach ($tueBusinessHourKeyMap as $oldKey => $newKey) {
-        if (isset($businessHourData[$oldKey])) {
-            $value = $businessHourData[$oldKey];
-            // 時刻の値をフォーマットして MySQL の時間型に変換
-            if ($oldKey === 'opening_time_tue' || $oldKey === 'closing_time_tue') {
-                $formattedValue = date('H:i', strtotime($value));
-            } else {
-                $formattedValue = $value;
-            }
-            $tueBusinessHourData[$newKey] = $formattedValue;
-        }
-    }
-
-    $wedBusinessHourKeyMap = [
-      'day_of_week_wed' => 'day_of_week', 
-      'opening_time_wed' => 'opening_time', 
-      'closing_time_wed' => 'closing_time', 
-      'is_closed_wed' => 'is_closed',
-    ];
-
-    $wedBusinessHourData = [];
-
-    foreach ($wedBusinessHourKeyMap as $oldKey => $newKey) {
-        if (isset($businessHourData[$oldKey])) {
-            $value = $businessHourData[$oldKey];
-            // 時刻の値をフォーマットして MySQL の時間型に変換
-            if ($oldKey === 'opening_time_wed' || $oldKey === 'closing_time_wed') {
-                $formattedValue = date('H:i', strtotime($value));
-            } else {
-                $formattedValue = $value;
-            }
-            $wedBusinessHourData[$newKey] = $formattedValue;
-        }
-    }
-
-    $thuBusinessHourKeyMap = [
-      'day_of_week_thu' => 'day_of_week', 
-      'opening_time_thu' => 'opening_time', 
-      'closing_time_thu' => 'closing_time', 
-      'is_closed_thu' => 'is_closed',
-    ];
-
-    $thuBusinessHourData = [];
-
-    foreach ($thuBusinessHourKeyMap as $oldKey => $newKey) {
-        if (isset($businessHourData[$oldKey])) {
-            $value = $businessHourData[$oldKey];
-            // 時刻の値をフォーマットして MySQL の時間型に変換
-            if ($oldKey === 'opening_time_thu' || $oldKey === 'closing_time_thu') {
-                $formattedValue = date('H:i', strtotime($value));
-            } else {
-                $formattedValue = $value;
-            }
-            $thuBusinessHourData[$newKey] = $formattedValue;
-        }
-    }
-    
-    $friBusinessHourKeyMap = [
-      'day_of_week_fri' => 'day_of_week', 
-      'opening_time_fri' => 'opening_time', 
-      'closing_time_fri' => 'closing_time', 
-      'is_closed_fri' => 'is_closed',
-    ];
-
-    $friBusinessHourData = [];
-
-    foreach ($friBusinessHourKeyMap as $oldKey => $newKey) {
-        if (isset($businessHourData[$oldKey])) {
-            $value = $businessHourData[$oldKey];
-            // 時刻の値をフォーマットして MySQL の時間型に変換
-            if ($oldKey === 'opening_time_fri' || $oldKey === 'closing_time_fri') {
-                $formattedValue = date('H:i', strtotime($value));
-            } else {
-                $formattedValue = $value;
-            }
-            $friBusinessHourData[$newKey] = $formattedValue;
-        }
-    }
-
-    $satBusinessHourKeyMap = [
-      'day_of_week_sat' => 'day_of_week', 
-      'opening_time_sat' => 'opening_time', 
-      'closing_time_sat' => 'closing_time', 
-      'is_closed_sat' => 'is_closed',
-    ];
-
-    $satBusinessHourData = [];
-
-    foreach ($satBusinessHourKeyMap as $oldKey => $newKey) {
-        if (isset($businessHourData[$oldKey])) {
-            $value = $businessHourData[$oldKey];
-            // 時刻の値をフォーマットして MySQL の時間型に変換
-            if ($oldKey === 'opening_time_sat' || $oldKey === 'closing_time_sat') {
-                $formattedValue = date('H:i', strtotime($value));
-            } else {
-                $formattedValue = $value;
-            }
-            $satBusinessHourData[$newKey] = $formattedValue;
-        }
-    }
-
-    $sunBusinessHourKeyMap = [
-      'day_of_week_sun' => 'day_of_week', 
-      'opening_time_sun' => 'opening_time', 
-      'closing_time_sun' => 'closing_time', 
-      'is_closed_sun' => 'is_closed',
-    ];
-
-    $sunBusinessHourData = [];
-
-    foreach ($sunBusinessHourKeyMap as $oldKey => $newKey) {
-        if (isset($businessHourData[$oldKey])) {
-            $value = $businessHourData[$oldKey];
-            // 時刻の値をフォーマットして MySQL の時間型に変換
-            if ($oldKey === 'opening_time_sun' || $oldKey === 'closing_time_sun') {
-                $formattedValue = date('H:i', strtotime($value));
-            } else {
-                $formattedValue = $value;
-            }
-            $sunBusinessHourData[$newKey] = $formattedValue;
-        }
-    }
-
-
-    // ログに配列を出力する
-    logger($saunaData);
-    logger('===========saunasテーブル挿入データ===========');
-    logger($saunaInfoData);
-    logger('===========sauna_infosテーブル挿入データ===========');
-    logger($waterBathData);
-    logger('===========water_bathsテーブル挿入データ===========');
-    logger($businessHourData);
-    logger('===========business_hoursテーブル挿入データ===========');
-    // logger($monBusinessHourData);
-    // logger('===========月曜挿入データ===========');
-    // logger($tueBusinessHourData);
-    // logger('===========火曜テーブル挿入データ===========');
-    // logger($wedBusinessHourData);
-    // logger('===========水曜テーブル挿入データ===========');
-
     // DBの挿入とトランザクションの設定
     DB::beginTransaction();
     try {
-      // モデルを作成してデータを保存
-      $sauna = Sauna::create($saunaData);
-      $saunaInfo = SaunaInfo::create(array_merge($saunaInfoData, ['sauna_id' => $sauna->id]));
-      $waterBath = WaterBath::create(array_merge($waterBathData, ['sauna_id' => $sauna->id]));
-      $monBusinessHourData = BusinessHour::create(array_merge($monBusinessHourData, ['sauna_id' => $sauna->id]));
-      $tueBusinessHourData = BusinessHour::create(array_merge($tueBusinessHourData, ['sauna_id' => $sauna->id]));
-      $wedBusinessHourData = BusinessHour::create(array_merge($wedBusinessHourData, ['sauna_id' => $sauna->id]));
-      $thuBusinessHourData = BusinessHour::create(array_merge($thuBusinessHourData, ['sauna_id' => $sauna->id]));
-      $friBusinessHourData = BusinessHour::create(array_merge($friBusinessHourData, ['sauna_id' => $sauna->id]));
-      $satBusinessHourData = BusinessHour::create(array_merge($satBusinessHourData, ['sauna_id' => $sauna->id]));
-      $sunBusinessHourData = BusinessHour::create(array_merge($sunBusinessHourData, ['sauna_id' => $sauna->id]));
+        // サウナの施設情報を抽出
+        $saunaData = $this->extractSaunaData($request);
+
+        // サウナ情報を抽出
+        $saunaInfoData = $this->extractSaunaInfoData($request);
+
+        // 水風呂情報を抽出
+        $waterBathData = $this->extractWaterBathData($request);
+
+        // 営業時間の情報を抽出
+        $businessHours = $this->extractBusinessHourData($request);
+
+        // 画像の情報を抽出
+        $imagesFacilityData = $this->extractImagesFacilityData($request);
+
+        // サウナの施設情報をDBに挿入
+        $sauna = Sauna::create($saunaData);
+        $saunaId = $sauna->id;
+
+        // サウナ情報をDBに挿入
+        $saunaInfoData['sauna_id'] = $saunaId;
+        $sauna->saunaInfo()->create($saunaInfoData);
+
+        // 水風呂情報をDBに挿入
+        $waterBathData['sauna_id'] = $saunaId;
+        $sauna->waterBath()->create($waterBathData);
+
+        // 営業時間の情報をDBに挿入
+        $this->processBusinessHourData($businessHours, $sauna->id);
+
+        // 画像の情報をDBに挿入
+        $imagesFacilityData['sauna_id'] = $saunaId;
+        $sauna->imagesFacilities()->create($imagesFacilityData);
 
       DB::commit();
       // 成功した場合の処理
@@ -360,6 +144,141 @@ class SaunaController extends Controller
     }
   }
 
+  // サウナの各情報(サウナの施設情報)
+  private function extractSaunaData(SaunaRequest $request)
+  {
+      return $request->only([
+          'user_id','facility_name', 'facility_type_id', 'usage_type_id', 'prefecture_id',
+          'address1', 'address2', 'address3', 'access_text', 'tel', 'website_url',
+          'business_hours_detail', 'min_fee', 'fee_text'
+      ]);
+  }
+
+  // サウナ情報
+  private function extractSaunaInfoData(SaunaRequest $request)
+  {
+      $saunaInfoData = $request->only([
+          'sauna_type_id', 'stove_type_id', 'heat_type_id', 'temperature_sauna',
+          'capacity_sauna', 'additional_info_sauna'
+      ]);
+
+      $saunaInfoKeyMap = [
+        'temperature_sauna' => 'temperature',
+        'capacity_sauna' => 'capacity',
+        'additional_info_sauna' => 'additional_info',
+      ];
+      
+      foreach ($saunaInfoKeyMap as $oldKey => $newKey) {
+        if (isset($saunaInfoData[$oldKey])) {
+            $saunaInfoData[$newKey] = $saunaInfoData[$oldKey];
+            unset($saunaInfoData[$oldKey]);
+        }
+      }
+      return $saunaInfoData;
+  }
+
+  // 水風呂情報
+  private function extractWaterBathData(SaunaRequest $request)
+  {
+      $waterBathData = $request->only([
+          'bath_type_id', 'water_type_id', 'temperature_water', 'capacity_water',
+          'deep_water', 'additional_info_water'
+      ]);
+
+      $waterBathKeyMap = [
+        'temperature_water' => 'temperature',
+        'capacity_water' => 'capacity',
+        'additional_info_water' => 'additional_info',
+    ];
+    
+    foreach ($waterBathKeyMap as $oldKey => $newKey) {
+      if (isset($waterBathData[$oldKey])) {
+          $waterBathData[$newKey] = $waterBathData[$oldKey];
+          unset($waterBathData[$oldKey]);
+      }
+    }
+    return $waterBathData;
+  }
+
+  // 営業時間の情報
+  private function extractBusinessHourData(SaunaRequest $request)
+  {
+      $businessHourData = $request->only([
+          'day_of_week_mon', 'opening_time_mon', 'closing_time_mon', 'is_closed_mon',
+          'day_of_week_tue', 'opening_time_tue', 'closing_time_tue', 'is_closed_tue',
+          'day_of_week_wed', 'opening_time_wed', 'closing_time_wed', 'is_closed_wed',
+          'day_of_week_thu', 'opening_time_thu', 'closing_time_thu', 'is_closed_thu',
+          'day_of_week_fri', 'opening_time_fri', 'closing_time_fri', 'is_closed_fri',
+          'day_of_week_sat', 'opening_time_sat', 'closing_time_sat', 'is_closed_sat',
+          'day_of_week_sun', 'opening_time_sun', 'closing_time_sun', 'is_closed_sun',
+      ]);
+
+      $businessHours = [];
+
+      $dayOfWeeks = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+
+      foreach ($dayOfWeeks as $day) {
+          $keyMap = [
+              "day_of_week_$day" => 'day_of_week',
+              "opening_time_$day" => 'opening_time',
+              "closing_time_$day" => 'closing_time',
+              "is_closed_$day" => 'is_closed',
+          ];
+
+          $businessHour = [];
+          
+          foreach ($keyMap as $oldKey => $newKey) {
+              if (isset($businessHourData[$oldKey])) {
+                  $value = $businessHourData[$oldKey];
+                  // 時刻の値をフォーマットして MySQL の時間型に変換
+                  if (strpos($oldKey, 'opening_time') !== false || strpos($oldKey, 'closing_time') !== false) {
+                      $value = date('H:i', strtotime($value));
+                  }
+                  $businessHour[$newKey] = $value;
+              }
+          }
+
+          $businessHours[] = $businessHour;
+      }
+
+      return $businessHours;
+  }
+
+  // 営業時間の各曜日ごとのDB挿入メソッド
+  protected function processBusinessHourData($businessHours, $saunaId)
+  {
+      foreach ($businessHours as $businessHour) {
+          // ビジネスアワーのデータにサウナIDを追加してデータベースに挿入
+          $businessHour['sauna_id'] = $saunaId;
+          
+          // BusinessHourモデルを使ってデータベースに新しいレコードを挿入
+          BusinessHour::create($businessHour);
+      }
+  }
+
+  // 画像の情報(画像ファイルの取得から保存先の取得) todo publicにするべき？
+  private function extractImagesFacilityData(SaunaRequest $request)
+  {
+      $imagesFacilityData = [];
+
+      // メイン画像の処理
+      if ($request->hasFile('main_image_url')) {
+          $mainImagePath = $request->file('main_image_url')->store('sauna-images', 'public');
+          $imagesFacilityData['main_image_url'] = $mainImagePath;
+      }
+      
+      // 他の画像ファイルの処理
+      $imageKeys = ['image1_url', 'image2_url', 'image3_url', 'image4_url', 'image5_url'];
+      foreach ($imageKeys as $key) {
+          if ($request->hasFile($key)) {
+              $imagePath = $request->file($key)->store('sauna-images', 'public');
+              $imagesFacilityData[$key] = $imagePath;
+          }
+      }
+
+      return $imagesFacilityData;
+  }
+
   // 詳細表示
   public function show($id){
     $sauna = Sauna::findOrFail($id);
@@ -371,9 +290,7 @@ class SaunaController extends Controller
   public function edit($id){
         $sauna = Sauna::with('facilityType', 'usageType', 'prefecture')->findOrFail($id);
             
-        // $saunaInfo = SaunaInfo::with('saunaType', 'stoveType', 'heatType')->where('sauna_id', $sauna->id)->get();
         $saunaInfo = SaunaInfo::with('saunaType', 'stoveType', 'heatType')->where('sauna_id', $sauna->id)->first();
-        // $waterBath = WaterBath::with('bathType', 'waterType')->where('sauna_id', $sauna->id)->get();
         $waterBath = WaterBath::with('bathType', 'waterType')->where('sauna_id', $sauna->id)->first();
 
         // saunasテーブルと外部キー設定しているテーブル情報の取得
@@ -391,8 +308,9 @@ class SaunaController extends Controller
         $bathTypes = BathType::select('id', 'type_name')->where('delete_flag', 0)->get();
     
         // images_facilitiesテーブルと外部キー設定しているテーブル情報の取得
+        $imagesFacilities = ImagesFacility::select('id', 'main_image_url', 'image1_url', 'image2_url', 'image3_url', 'image4_url', 'image5_url')->where('sauna_id', $sauna->id)->get();
         // business_hoursテーブルと外部キー設定しているテーブル情報の取得
-        
+        $businessHours = BusinessHour::select('id', 'day_of_week', 'opening_time', 'closing_time', 'is_closed')->where('sauna_id', $sauna->id)->get();
     
     
         // ビューにデータを渡す
@@ -408,6 +326,8 @@ class SaunaController extends Controller
           'heatTypes' => $heatTypes,
           'waterTypes' => $waterTypes,
           'bathTypes' => $bathTypes,
+          'imagesFacilities' => $imagesFacilities,
+          'businessHours' => $businessHours,
       ]);
 
   }

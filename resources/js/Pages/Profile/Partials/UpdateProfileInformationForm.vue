@@ -95,8 +95,6 @@ const sendEmailVerification = () => {
 };
 
 const selectNewPhoto = () => {
-  console.log(photoInput);
-  console.log(photoInput.value);
     photoInput.value.click();
 };
 
@@ -109,9 +107,13 @@ const updatePhotoPreview = () => {
 
     reader.onload = (e) => {
         photoPreview.value = e.target.result;
+        console.log(e.target);
     };
 
     reader.readAsDataURL(photo);
+    console.log(photoInput);
+        console.log(photoInput.value);
+        console.log(photoInput.value.files);
 };
 
 const deletePhoto = () => {
