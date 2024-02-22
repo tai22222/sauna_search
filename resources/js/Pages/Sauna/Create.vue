@@ -6,14 +6,10 @@ import CreateSaunaInfo from '@/Pages/Sauna/CreateSaunaInfo.vue';
 
 import { Link, router, useForm, usePage } from '@inertiajs/vue3';
 
-const { saunas, saunaInfos } = usePage().props;
-
-
 defineProps({
     confirmsTwoFactorAuthentication: Boolean,
     sessions: Array,
 });
-
 </script>
 
 <template>
@@ -30,18 +26,15 @@ defineProps({
                     <!-- 子コンポーネント(CreateSaunaInfo)へオブジェクト、配列の受け渡し -->
                     <CreateSaunaInfo 
                       :user="$page.props.auth.user"
-                      :sauna="saunas"
+                      :sauna="$page.props.saunas"
                       :facilityType="$page.props.facilityTypes"
                       :usageType="$page.props.usageTypes"
                       :prefecture="$page.props.prefectures"
-                      :saunaInfo="saunaInfos"
                       :saunaType="$page.props.saunaTypes"
                       :stoveType="$page.props.stoveTypes"
                       :heatType="$page.props.heatTypes"
-                      :waterBath="$page.props.waterBaths"
-                      :bathType="$page.props.bathsTypes"
+                      :bathType="$page.props.bathTypes"
                       :waterType="$page.props.waterTypes"
-                      :businessHour="$page.props.businessHours"
                     />
 
                     <SectionBorder />

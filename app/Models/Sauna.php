@@ -47,9 +47,9 @@ class Sauna extends Model
   }
 
   // 画像情報とのリレーション(1対多)
-  public function imagesFacilities()
+  public function imagesFacility()
   {
-      return $this->hasMany(ImagesFacility::class);
+      return $this->hasOne(ImagesFacility::class);
   }
 
 

@@ -12,24 +12,31 @@ import TextInput from '@/Components/TextInput.vue';
 import Textarea from '@/Components/Textarea.vue';
 import SelectBox from '@/Components/SelectBox.vue';
 
+// Laravel (app.blade.php)のCSRFトークン取得
+const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+// axiosのデフォルトヘッダーにCSRFトークンを設定
+axios.defaults.headers.common['X-CSRF-TOKEN'] = csrfToken;
+
 // 親コンポーネント(Create.vue)からオブジェクト、配列の受け渡し(CompositionAPI、ObjectはArrayも含む)
 const props = defineProps({
     user: Object,
     sauna: Object,
-    facilityType: Object,
-    usageType: Object,
-    prefecture: Object,
-    saunaInfo: Object,
-    saunaType: Object,
-    stoveType: Object,
-    heatType: Object,
-    waterBath: Object,
-    bathType: Object,
-    waterType: Object,
-    businessHour: Object,
+    facilityType: Array,
+    usageType: Array,
+    prefecture: Array,
+    // saunaInfo: Object,
+    saunaType: Array,
+    stoveType: Array,
+    heatType: Array,
+    // waterBath: Object,
+    bathType: Array,
+    waterType: Array,
+    // businessHour: Object,
 });
 
-// フォームの各入力項目に対応するPOSTデータ(saunasテーブル、saunas_infosテーブル、water_bathsテーブル)
+// フォームの各入力項目に対応するPOSTデータ
+// (saunasテーブル、saunas_infosテーブル、water_bathsテーブル、images_facilitiesテーブル、business_hoursテーブル)
 const form = useForm({
     _method: 'POST',
     user_id: props.user.id,
@@ -163,9 +170,11 @@ const selectDay = (day) => {
 };
 
 // プレビュー表示のための画像
-const photoPreview = ref(null);
+// const photoPreview = ref(null);
 // 画像を選択した時の双方バインディングデータ
-const photoInput = ref(null);
+// const photoInput = ref(null);
+
+
 // DB挿入画像の配列
 const imageInputs = ref([]);
 const imageUrls = ref([
@@ -176,9 +185,6 @@ const imageUrls = ref([
   { key: 'image4_url', value: '' },
   { key: 'image5_url', value: '' },
 ]);
-
-// フォームデータのリアクティブなオブジェクトを作成
-// const form = reactive(initialFormValues);
 
 // フォームを送信した時に実行(preventされるのでinputタグは手でformの中身を更新する必要あり)
 const updateSaunaInformation = () => {
@@ -193,7 +199,7 @@ const updateSaunaInformation = () => {
     form.post(route('sauna.store'), {
         // errorBag: 'updateProfileInformation',
         // preserveScroll: true,
-        onSuccess: () => clearPhotoFileInput(),
+        // onSuccess: () => clearPhotoFileInput(),
     });
 };
 
@@ -204,6 +210,7 @@ onMounted(() => {
     // input要素をimageInputsに追加
     imageInputs.value.push(input);
   });
+
 });
 
 // 画像選択ボタンを押した時に、input要素を取得してクリック
@@ -225,24 +232,28 @@ const selectImage = (event, field, index) => {
     // プレビュー画像表示のためにimageUrlsのvalueを更新
     imageUrls.value[index].value = reader.result;
   };
+  console.log('form');
+    console.log(form);
+    console.log('imageUrls');
+    console.log(imageUrls);
 
   reader.readAsDataURL(file);
 };
 
 
-const deletePhoto = () => {
-    photoPreview.value = '';
-    clearPhotoFileInput();
-    console.log('画像クリア時');
-    console.log(photoPreview);
-};
+// const deletePhoto = () => {
+//     photoPreview.value = '';
+//     clearPhotoFileInput();
+//     console.log('画像クリア時');
+//     console.log(photoPreview);
+// };
 
 // プレビュー削除時にinputデータも削除
-const clearPhotoFileInput = () => {
-    if (photoInput.value?.value) {
-        photoInput.value.value = null;
-    }
-};
+// const clearPhotoFileInput = () => {
+//     if (photoInput.value?.value) {
+//         photoInput.value.value = null;
+//     }
+// };
 
 // 画像を削除するときに実行(for対応)
 const deleteImage = (field, index) => {

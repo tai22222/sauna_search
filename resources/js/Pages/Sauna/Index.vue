@@ -16,7 +16,7 @@ import SelectBox from '@/Components/SelectBox.vue';
 
 // 親コンポーネント(Create.vue)からオブジェクト、配列の受け渡し(CompositionAPI、ObjectはArrayも含む)
 const props = defineProps({
-    page: Object,
+    use: Object,
     saunas: Object,
     saunaInfos: Object,
     waterBaths: Object,
@@ -46,7 +46,7 @@ console.log(props);
               <div v-if="$page.props.jetstream.canUpdateProfileInformation">
 
                   <!-- 検索フォーム -->
-                  <FormSection @submitted="updateProfileInformation" class="mb-16">
+                  <FormSection @submitted="" class="mb-16">
                       <template #title>
                           【検索フォーム】
                       </template>

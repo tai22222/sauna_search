@@ -1,7 +1,9 @@
 <script setup>
-import { ref, computed, defineProps } from 'vue';
+import { ref, computed, defineProps, onMounted } from 'vue';
 
 import { Link, router, useForm, usePage } from '@inertiajs/vue3';
+import axios from 'axios';
+
 import AppLayout from '@/Layouts/AppLayout.vue';
 import ActionMessage from '@/Components/ActionMessage.vue';
 import FormSection from '@/Components/FormSection.vue';
@@ -13,13 +15,18 @@ import TextInput from '@/Components/TextInput.vue';
 import Textarea from '@/Components/Textarea.vue';
 import SelectBox from '@/Components/SelectBox.vue';
 
+// Laravel (app.blade.php)のCSRFトークン取得
+const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+// axiosのデフォルトヘッダーにCSRFトークンを設定
+axios.defaults.headers.common['X-CSRF-TOKEN'] = csrfToken;
+
+
 // 親コンポーネント(Create.vue)からオブジェクト、配列の受け渡し(CompositionAPI、ObjectはArrayも含む)
 const props = defineProps({
-    confirmsTwoFactorAuthentication: Boolean,
-    sessions: Array,
     sauna: Object,
     saunaInfo: Object,
-    waterBaths: Object,
+    waterBath: Object,
     facilityTypes: Array,
     usageTypes: Array,
     prefectures: Array,
@@ -27,18 +34,24 @@ const props = defineProps({
     stoveTypes: Array,
     heatTypes: Array,
     bathTypes: Array,
-    waterType: Array,
+    waterTypes: Array,
+    businessHours: Array,
+    imagesFacilities: Array,
+    mainImagePath: String,
+    image1Path: String,
+    image2Path: String,
+    image3Path: String,
+    image4Path: String,
+    image5Path: String,
 });
 
 // Controllerからpropsとして渡ってきたデータを各名前で取得可能にする
-const { sauna, saunaInfo, waterBath,
+const { sauna, saunaInfo, waterBath, businessHours, imagesFacilities,
   facilityTypes, usageTypes, prefectures, 
   saunaTypes, stoveTypes, heatTypes, 
   waterTypes, bathTypes 
 } = usePage().props;
 
-// フォームの各入力項目に対応するPOSTデータ(saunasテーブル、saunas_infosテーブル、water_bathsテーブル)
-// DBから初期値(selected〇〇)設定のために定義
 const form = useForm({
     _method: 'PUT',
 
@@ -70,8 +83,95 @@ const form = useForm({
     deep_water: waterBath.deep_water,
     additional_info_water: waterBath.additional_info,
 
-    // _token: document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+    // 各曜日の入力項目(月0→日6)
+    day_of_week_mon: businessHours[0].day_of_week,
+    opening_time_mon: businessHours[0].opening_time,
+    closing_time_mon: businessHours[0].closing_time,
+    is_closed_mon: businessHours[0].is_closed,
+    day_of_week_tue: businessHours[1].day_of_week,
+    opening_time_tue: businessHours[1].opening_time,
+    closing_time_tue: businessHours[1].closing_time,
+    is_closed_tue: businessHours[1].is_closed,
+    day_of_week_wed: businessHours[2].day_of_week,
+    opening_time_wed: businessHours[2].opening_time,
+    closing_time_wed: businessHours[2].closing_time,
+    is_closed_wed: businessHours[2].is_closed,
+    day_of_week_thu: businessHours[3].day_of_week,
+    opening_time_thu: businessHours[3].opening_time,
+    closing_time_thu: businessHours[3].closing_time,
+    is_closed_thu: businessHours[3].is_closed,
+    day_of_week_fri: businessHours[4].day_of_week,
+    opening_time_fri: businessHours[4].opening_time,
+    closing_time_fri: businessHours[4].closing_time,
+    is_closed_fri: businessHours[4].is_closed,
+    day_of_week_sat: businessHours[5].day_of_week,
+    opening_time_sat: businessHours[5].opening_time,
+    closing_time_sat: businessHours[5].closing_time,
+    is_closed_sat: businessHours[5].is_closed,
+    day_of_week_sun: businessHours[6].day_of_week,
+    opening_time_sun: businessHours[6].opening_time,
+    closing_time_sun: businessHours[6].closing_time,
+    is_closed_sun: businessHours[6].is_closed,
+
+    // 画像のアップロード
+    main_image_url: imagesFacilities[0].main_image_url,
+    image1_url: imagesFacilities[0].image1_url,
+    image2_url: imagesFacilities[0].image2_url,
+    image3_url: imagesFacilities[0].image3_url,
+    image4_url: imagesFacilities[0].image4_url,
+    image5_url: imagesFacilities[0].image5_url,
 });
+
+// 送信データとDB登録データの比較のため
+const initialValue = {
+    address2: sauna.address2,
+    address3: sauna.address3,
+    access_text: sauna.access_text,
+    tel: sauna.tel,
+    website_url: sauna.website_url,
+    business_hours_detail: sauna.business_hours_detail,
+    min_fee: sauna.min_fee,
+    fee_text: sauna.fee_text,
+
+    sauna_type_id: saunaInfo.sauna_type_id,
+    stove_type_id: saunaInfo.stove_type_id,
+    heat_type_id: saunaInfo.heat_type_id,
+    temperature_sauna:saunaInfo.temperature,
+    capacity_sauna: saunaInfo.capacity,
+    additional_info_sauna: saunaInfo.additional_info,
+
+    bath_type_id: waterBath.bath_type_id,
+    water_type_id: waterBath.water_type_id,
+    temperature_water: waterBath.temperature,
+    capacity_water: waterBath.capacity,
+    deep_water: waterBath.deep_water,
+    additional_info_water: waterBath.additional_info,
+
+    // 各曜日の入力項目(月0→日6)
+    opening_time_mon: businessHours[0].opening_time,
+    closing_time_mon: businessHours[0].closing_time,
+    opening_time_tue: businessHours[1].opening_time,
+    closing_time_tue: businessHours[1].closing_time,
+    opening_time_wed: businessHours[2].opening_time,
+    closing_time_wed: businessHours[2].closing_time,
+    opening_time_thu: businessHours[3].opening_time,
+    closing_time_thu: businessHours[3].closing_time,
+    opening_time_fri: businessHours[4].opening_time,
+    closing_time_fri: businessHours[4].closing_time,
+    opening_time_sat: businessHours[5].opening_time,
+    closing_time_sat: businessHours[5].closing_time,
+    opening_time_sun: businessHours[6].opening_time,
+    closing_time_sun: businessHours[6].closing_time,
+
+    // 画像のアップロード
+    main_image_url: imagesFacilities[0].main_image_url,
+    image1_url: imagesFacilities[0].image1_url,
+    image2_url: imagesFacilities[0].image2_url,
+    image3_url: imagesFacilities[0].image3_url,
+    image4_url: imagesFacilities[0].image4_url,
+    image5_url: imagesFacilities[0].image5_url,
+}
+console.log(initialValue);
 
 // 選択肢の用意Arrayと初期値設定の値selected
 // 施設タイプ
@@ -111,60 +211,166 @@ const waterDepthOptions = ref([
     { id: 6, type_name: '140cm ~ (肩)' }
 ]);
 
+// 営業時間の曜日定義
+const daysOfWeek = ref({
+  '月': 'mon',
+  '火': 'tue',
+  '水': 'wed',
+  '木': 'thu',
+  '金': 'fri',
+  '土': 'sat',
+  '日': 'sun'
+});
+
+// 選択された曜日の取得(初期選択mon)
+const selectedDay = ref('mon');
+
+// 選択された曜日をセットする関数
+const selectDay = (day) => {
+  selectedDay.value = day;
+};
+
 const verificationLinkSent = ref(null);
 const photoPreview = ref(null);
 const photoInput = ref(null);
 
-const updateProfileInformation = () => {
-    if (photoInput.value) {
-        form.photo = photoInput.value.files[0];
-    }
-    form.put(route('sauna.update', {
-        id: props.sauna.id,
-        // errorBag: 'updateProfileInformation',
-        // preserveScroll: true,
-        // onSuccess: () => clearPhotoFileInput(),
-    }));
+// DB挿入画像の配列
+const imageInputs = ref([]);
+const imageUrls = ref([
+  { key: 'main_image_url', value: '' },
+  { key: 'image1_url', value: '' },
+  { key: 'image2_url', value: '' },
+  { key: 'image3_url', value: '' },
+  { key: 'image4_url', value: '' },
+  { key: 'image5_url', value: '' },
+]);
+
+// フォームを送信するメソッド
+const updateSaunaInformation = () => {
+    // フォームデータ(put送信用データ))を作成
+    const formData = new FormData();
+    // フォームの各フィールドを更新データをformDataに追加
+    Object.entries(form).forEach(([key, value]) => {
+        if (value !== null && !(key.includes('_url') && value instanceof File) && value !== initialValue[key]) {
+            formData.append(key, value);
+        }
+    });
+
+    // Object.entries(form).forEach(([key, value]) => {
+    //     // 画像フィールドの場合はファイルオブジェクトを追加
+    //     if (value !== null) {
+    //       if (key.includes('_url') && value instanceof File) {
+    //           console.log('画像はいったよ');
+    //           // ファイルが選択されている場合のみ追加
+    //           if (form[key] instanceof File) {
+    //               formData.append(key, form[key]);
+    //           }
+    //       } else {
+    //           console.log('がぞう以外だよ');
+    //           formData.append(key, value);
+    //       }
+    //     }
+    // });
+    console.log('put送信の中身');
+    console.log(...formData.entries());
+
+    // PUTリクエストを送信(Content-Typeを指定しない場合Laravel側で認識できなかった)
+    axios.put(`/sauna_search/public/api/sauna/${props.sauna.id}`, formData, {
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+    .then(response => {
+      console.log('レスポンスデータ');
+        console.log(response.data);
+    })
+    .catch(error => {
+        console.log('エラー');
+        console.error(error.response.data);
+    });
+
+    // 新規追加データをPOSTリクエストで送信(画像データの追加と変更)
+    const newFormData = new FormData();
+    Object.entries(form).forEach(([key, value]) => {
+      if (key.includes('_url') && value instanceof File) {
+          newFormData.append(key, value);
+      }
+    });
+
+    console.log('post送信の中身(画像データの追加と更新)');
+    console.log(...newFormData.entries());
+
+    axios.post(`/sauna_search/public/api/sauna/${props.sauna.id}`, newFormData)
+    .then(response => {
+        console.log('レスポンスデータ');
+        console.log(response.data);
+    })
+    .catch(error => {
+        console.log('エラー');
+        console.error(error.response.data);
+    });
+
+    // console.log(...newFormData.entries);
 };
-console.log(props.sauna.id);
+
+// マウント時にv-forしたinput要素(file、hidden)をimageInputsに追加
+onMounted(() => {
+  const fileInputs = document.querySelectorAll('input[type="file"].hidden');
+  fileInputs.forEach((input, index) => {
+    // input要素をimageInputsに追加
+    imageInputs.value.push(input);
+  });
+
+  fetchImageUrls();
+});
+
 // const sendEmailVerification = () => {
 //     verificationLinkSent.value = true;
 // };
 
-const selectNewPhoto = () => {
-    photoInput.value.click();
+// 画像選択ボタンを押した時に、input要素を取得してクリック
+const selectNewPhoto = (index) => {
+  // 対応する input 要素を取得し、クリックイベントをトリガーする
+  const input = imageInputs.value[index];
+  if (input) {
+    input.click();
+  }
 };
 
-const updatePhotoPreview = () => {
-    const photo = photoInput.value.files[0];
+// 画像を選択した時の処理
+const selectImage = (event, field, index) => {
+    const file = event.target.files[0];
+    form[field] = file;
 
-    if (! photo) return;
-
-    const reader = new FileReader();
-
-    reader.onload = (e) => {
-        photoPreview.value = e.target.result;
-    };
-
-    reader.readAsDataURL(photo);
+    // プレビュー画像表示のためにimageUrlsのvalueを更新(blobオブジェクト生成)
+    imageUrls.value[index].value = URL.createObjectURL(file);
 };
 
-const deletePhoto = () => {
-    router.delete(route('current-user-photo.destroy'), {
-        preserveScroll: true,
-        onSuccess: () => {
-            photoPreview.value = null;
-            clearPhotoFileInput();
-        },
-    });
+// 初期画面表示時に画像のURLを取得するメソッド
+const fetchImageUrls = () => {
+    axios.get(`/sauna_search/public/api/sauna/${props.sauna.id}`)
+        .then(response => {
+            const data = response.data;
+            // データから画像のURLを取得して設定
+            imageUrls.value.forEach(image => {
+                image.value = data[image.key];
+            });
+        })
+        .catch(error => {
+            console.error(error.response.data);
+        });
 };
 
-const clearPhotoFileInput = () => {
-    if (photoInput.value?.value) {
-        photoInput.value.value = null;
-    }
+// 画像を削除するときに実行(for対応)
+const deleteImage = (field, index) => {
+    form[field] = '';
+    // プレビュー画像表示のためにimageUrlsのvalueを更新
+    imageUrls.value[index].value = '';
 };
+
+console.log(props);
 </script>
+
 <template>
   <AppLayout title="Sauna施設情報">
       <template #header>
@@ -186,7 +392,7 @@ const clearPhotoFileInput = () => {
                   </div>
 
                   <!-- 施設情報 -->
-                  <FormSection @submitted="updateProfileInformation">
+                  <FormSection @submitted="updateSaunaInformation">
                       <template #title>
                           【施設情報入力】
                       </template>
@@ -235,7 +441,6 @@ const clearPhotoFileInput = () => {
                               />
                           </div>
 
-                          <!-- Saunas.Genders Gender input 不要 -->
                           <!-- Saunas.Prefectures Prefecture select -->
                           <div class="col-span-3 sm:col-span-3">
                               <SelectBox 
@@ -334,11 +539,62 @@ const clearPhotoFileInput = () => {
                               <InputError :message="form.errors.website_url" class="mt-2" />
                           </div>
 
-                          <!-- Business_hours.Saunas business_hours hours 曜日ごとに(foreach) -->
-                            <!-- Business_hours day_of_week integer -->
-                            <!-- Business_hours opening_time -->
-                            <!-- Business_hours closing_time -->
-                            <!-- Business_hours is_closed boolean -->
+                          <!-- Business_hours.Saunas business_hours hours 曜日ごとに(for) todo 初期値設定できていない-->
+                          <div class="col-span-6 sm:col-span-4 pb-6 border rounded">
+                            <div class="grid grid-cols-7">
+                              <div v-for="(alfDay, day) in daysOfWeek" 
+                                :key="day" 
+                                @click="selectDay(alfDay)" 
+                                class="inline-block p-4 mb-6 text-center text-gray-600 font-bold border border-gray-400 border rounded"
+                                :class="[selectedDay === alfDay ? 'bg-blue-300' : 'bg-gray-200']">
+                                {{ day }}
+                              </div>
+                            </div>
+
+                            <div class="md:grid md:grid-cols-6 md:gap-6 ml-8">
+                              <!-- 曜日ごとのビジネスアワーの入力フィールドを表示 -->
+                              <div class="col-span-6"
+                                  v-for="(alfDay, day) in daysOfWeek" 
+                                  :key="day"
+                                  v-show="selectedDay === alfDay">
+                                <div>
+                                  <!-- 定休日のチェックボックス -->
+                                  <input 
+                                    type="checkbox"
+                                    v-model="form['is_closed_' + alfDay]"
+                                    class="m-4 form-checkbox h-8 w-8 text-gray-600 rounded border-none focus:ring-0 shadow-none checked:bg-gray-600 bg-gray-200"
+                                  >
+                                  <label class="inline-block text-center text-l">定休日</label>
+                                </div>
+
+                                <div class="grid grid-cols-6 md:gap-6">
+                                  <div class="col-span-2">
+                                    <!-- 開始時間の入力フィールド -->
+                                    <InputLabel for="'opening_time_' + alfDay" value="営業開始時間" />
+                                      <TextInput
+                                          id="'opening_time_' + alfDay"
+                                          v-model="form['opening_time_' + alfDay]"
+                                          type="time"
+                                          class="mt-1 block w-full"
+                                          placeholder="例： 12:00"
+                                      />
+                                  </div>
+                                  <span class="flex justify-center items-center h-full">〜</span>
+                                  <div class="col-span-2">
+                                    <!-- 終了時間の入力フィールド -->
+                                    <InputLabel for="'closing_time_' + alfDay" value="営業終了時間" />
+                                      <TextInput
+                                          id="'closing_time_' + alfDay"
+                                          v-model="form['closing_time_' + alfDay]"
+                                          type="time"
+                                          class="mt-1 block w-full"
+                                          placeholder="例： 12:00"
+                                      />
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
 
                           <!-- Saunas business_hours_detail textarea -->
                           <div class="col-span-6 sm:col-span-4">
@@ -596,12 +852,62 @@ const clearPhotoFileInput = () => {
                               <InputError :message="form.errors.access_text_water" class="mt-2" />
                           </div>
 
-                          <!-- Images_facilities.Saunas main_image_url input -->
-                          <!-- Images_facilities.Saunas image1_url input -->
-                          <!-- Images_facilities.Saunas image2_url input -->
-                          <!-- Images_facilities.Saunas image3_url input -->
-                          <!-- Images_facilities.Saunas image4_url input -->
-                          <!-- Images_facilities.Saunas image5_url input -->
+                          <div class="col-span-6 py-8">
+                          <div class="border-t border-gray-200" /> 
+                        </div>
+                        <h3 class="col-span-6 text-xl mb-4">・画像登録</h3>
+                      <!-- 画像アップロード 6枚(main1枚と1~5のimage) -->
+                      <div class="col-span-6">
+                            <!-- 施設メイン画像のinput -->
+                            <div class="grid grid-cols-6 gap-6">
+
+                                <div v-for="(image, index) in imageUrls" key="index" class="col-span-6 md:col-span-2 sm:col-span-3">
+                                  <input
+                                    :ref="`imageInputs${index}`"
+                                    type="file"
+                                    class="hidden"
+                                    @change="selectImage($event, image.key, index)"
+                                  >
+
+                                  <InputLabel :for="`imageInput${image.key}`" value="サウナ画像" />
+
+                                  <div v-if="image.value" class="mt-2">
+                                    <template v-if="image.value.startsWith('blob:')">
+                                      <!-- 画像を選択して追加した場合の処理 -->
+                                      <span class="block rounded w-full bg-cover bg-no-repeat bg-center" 
+                                            :style="{ backgroundImage: `url(${image.value})`, paddingBottom: '100%' }"></span>
+                                    </template>
+                                    <template v-else>
+                                      <!-- DBから取得した画像データの場合の処理 -->
+                                      <span class="block rounded w-full bg-cover bg-no-repeat bg-center" 
+                                            :style="{ backgroundImage: `url(http://localhost/storage/${image.value})`, paddingBottom: '100%' }"></span>
+                                    </template>
+                                  </div>
+                                  <div v-else class="mt-2 w-full">
+                                    <!-- 画像が空の場合に表示する代替の画像 -->
+                                    <img :src="`http://localhost/storage/default-images/no_image.jpg`" 
+                                        :alt="sauna.facility_name" 
+                                        class="rounded w-full object-cover">
+                                  </div>
+
+                                  <!-- 施設画像追加・削除ボタン -->
+                                  <SecondaryButton class="mt-2 mr-2" type="button" @click.prevent="selectNewPhoto(index)">
+                                      画像を選択
+                                  </SecondaryButton>
+
+                                  <SecondaryButton
+                                      v-if="image.value"
+                                      type="button"
+                                      class="mt-2 bg-red-300"
+                                      @click.prevent="deleteImage(image.key, index)"
+                                  >
+                                      削除
+                                  </SecondaryButton>
+
+                                  <InputError :message="form.errors.photo" class="mt-2" />
+                                </div>
+                            </div>
+                        </div>
 
                       </template>
 

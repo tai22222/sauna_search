@@ -77,6 +77,7 @@ const updateDay = (type, value) => {
 const verificationLinkSent = ref(null);
 const photoPreview = ref(null);
 const photoInput = ref(null);
+
 const updateProfileInformation = () => {
     if (photoInput.value) {
         form.photo = photoInput.value.files[0];
@@ -131,7 +132,7 @@ const clearPhotoFileInput = () => {
         photoInput.value.value = null;
     }
 };
-// console.log(props);
+console.log(props);
 </script>
 
 <template>

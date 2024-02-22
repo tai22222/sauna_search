@@ -49,5 +49,11 @@ Route::get('/saunas/{id}', [SaunaController::class, 'show'])->name('sauna.show')
 Route::get('/saunas/edit/{id}', [SaunaController::class, 'edit'])->name('sauna.edit');
 // saunas 施設詳細更新処理
 Route::put('/saunas/edit/{id}', [SaunaController::class, 'update'])->name('sauna.update');
+
+
+Route::put('/saunas', [SaunaController::class, 'index'])->name('sauna.update');
+
 // saunas 施設情報削除処理
 // Route::delete('/saunas/{id}', [SaunaController::class, 'destroy'])->name('sauna.destroy');
+
+
