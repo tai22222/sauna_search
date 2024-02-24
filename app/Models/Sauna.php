@@ -46,7 +46,7 @@ class Sauna extends Model
       return $this->hasMany(BusinessHour::class);
   }
 
-  // 画像情報とのリレーション(1対多)
+  // 画像情報とのリレーション(1対1)
   public function imagesFacility()
   {
       return $this->hasOne(ImagesFacility::class);

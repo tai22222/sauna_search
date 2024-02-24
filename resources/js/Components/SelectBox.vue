@@ -2,14 +2,13 @@
 import { onMounted, ref, defineProps, defineEmits, defineExpose } from 'vue';
 import InputError from '@/Components/InputError.vue';
 
-// initialValueは初期値、modeValueは入力値、optionsは選択肢としての配列
+// initialValueは初期値、modeValueは入力値、optionsは選択肢としての配列、columnはDBのカラム名
 const props = defineProps({
     modelValue: { String, Number},
-    id: String,
     initialValue: { String, Number},
+    id: String,
     label: String,
     options: Array,
-    error: String,
     typesArray: Array,
     column: {
       type: String,
@@ -18,7 +17,9 @@ const props = defineProps({
 });
 
 const input = ref(null);
+// 選択されている値を取得
 const selectedValue = ref(props.modelValue);
+// 親コンポーネントに受け渡す
 const emit = defineEmits(['update:modelValue']);
 
 
@@ -50,10 +51,10 @@ defineExpose({ focus: () => input.value.focus() });
       @change="handleChange" 
     >
       <option :value="null">選択してください</option>
-      <option v-for="option in props.options" :key="option.id" :value=" option.id">{{ option[props.column]}}</option>
+      <option 
+        v-for="option in props.options" 
+        :key="option.id" 
+        :value="option.id">{{ option[props.column]}}</option>
     </select>
-    <InputError :message="error" class="mt-2" />
   </div>
-  <!-- <p>{{ initialValue }}</p> -->
-  <!-- <p>{{ selectedValue }}</p> -->
 </template>

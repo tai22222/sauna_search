@@ -1,6 +1,6 @@
 <script setup>
-import { ref, computed, defineProps, onMounted  } from 'vue';
-import { Link, router, useForm, usePage } from '@inertiajs/vue3';
+import { ref, defineProps, onMounted  } from 'vue';
+import { useForm, usePage } from '@inertiajs/vue3';
 
 import ActionMessage from '@/Components/ActionMessage.vue';
 import FormSection from '@/Components/FormSection.vue';
@@ -178,7 +178,7 @@ const selectDay = (day) => {
 // DB挿入画像の配列
 const imageInputs = ref([]);
 const imageUrls = ref([
-  { key: 'main_image_url', value: '' },
+  { key: 'main_image_url', value: '' }, 
   { key: 'image1_url', value: '' },
   { key: 'image2_url', value: '' },
   { key: 'image3_url', value: '' },

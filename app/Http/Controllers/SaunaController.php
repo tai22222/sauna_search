@@ -24,25 +24,138 @@ use App\Models\ImagesFacility;
 
 // フォームのバリデーション(ミドルウェア)
 use App\Http\Requests\SaunaRequest;
+use Illuminate\Http\Request;
 
 use Illuminate\Support\Facades\DB;
-use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Carbon;
 
 class SaunaController extends Controller
 {
   // 一覧表示
-  public function index(){
-    $saunas = Sauna::with('facilityType','usageType', 'prefecture')->get();
-    $saunaInfos = SaunaInfo::with('saunaType', 'stoveType', 'heatType')->get();
-    $waterBaths = WaterBath::with('bathType', 'waterType')->get();
-    
-    return Inertia::render('Sauna/Index', [
+  public function index(Request $request){
+    $prefectures = Prefecture::select('id', 'name')->where('delete_flag', 0)->get();
+    // サウナ情報のクエリを取得
+    $query = Sauna::select('id', 'facility_name', 'facility_type_id', 'usage_type_id', 'prefecture_id', 'address1', 'min_fee');
+
+    // 検索結果の取得
+    $prefecture = $request->input('prefecture');
+    // condition = $request->input('condition');
+    // keyword = $request->input('keyword');
+    $sauna_temperature_from = $request->input('sauna_temperature_from');
+    $sauna_temperature_to = $request->input('sauna_temperature_to');
+    $water_bath_temperature_from = $request->input('water_bath_temperature_from');
+    $water_bath_temperature_to = $request->input('water_bath_temperature_to');
+
+
+    // 検索条件がある場合はフィルタリングを行う
+    // if ($request->has('keyword')) {
+    //     $keyword = $request->input('keyword');
+    //     $query->where('facility_name', 'like', "%$keyword%");
+    // }
+
+    // 都道府県に関する検索条件
+    if ($request->filled('prefecture')) {
+      $query->where('prefecture_id', $request->input('prefecture'));
+      logger('prefectureで検索');
+      logger($query->toSql());
+    }
+
+    // サウナの温度に関する検索条件
+    if ($request->filled('sauna_temperature_from') && !$request->filled('sauna_temperature_to')) {
+      // _fromが存在して_toが空の場合
+      $query->whereHas('saunaInfo', function($query) use ($sauna_temperature_from) {
+          $query->where('temperature', '>=', $sauna_temperature_from);
+      });
+    } elseif (!$request->filled('sauna_temperature_from') && $request->filled('sauna_temperature_to')) {
+      // _fromが空で_toが存在している場合
+      $query->whereHas('saunaInfo', function($query) use ($sauna_temperature_to) {
+          $query->where('temperature', '<=', $sauna_temperature_to);
+      });
+    } elseif ($request->filled('sauna_temperature_from') && $request->filled('sauna_temperature_to')) {
+      // 両方の値が存在している場合
+      $query->whereHas('saunaInfo', function($query) use ($sauna_temperature_from, $sauna_temperature_to) {
+          $query->whereBetween('temperature', [$sauna_temperature_from, $sauna_temperature_to]);
+      });
+    }
+
+    // 水風呂の温度に関する検索条件
+    if ($request->filled('water_bath_temperature_from') && !$request->filled('water_bath_temperature_to')) {
+      // _fromが存在して_toが空の場合
+      $query->whereHas('waterBath', function($query) use ($water_bath_temperature_from) {
+          $query->where('temperature', '>=', $water_bath_temperature_from);
+      });
+    } elseif (!$request->filled('water_bath_temperature_from') && $request->filled('water_bath_temperature_to')) {
+      // _fromが空で_toが存在している場合
+      $query->whereHas('waterBath', function($query) use ($water_bath_temperature_to) {
+          $query->where('temperature', '<=', $water_bath_temperature_to);
+      });
+    } elseif ($request->filled('water_bath_temperature_from') && $request->filled('water_bath_temperature_to')) {
+      // 両方の値が存在している場合
+      $query->whereHas('waterBath', function($query) use ($water_bath_temperature_from, $water_bath_temperature_to) {
+          $query->whereBetween('temperature', [$water_bath_temperature_from, $water_bath_temperature_to]);
+      });
+    }
+
+    // ソート条件がある場合は並び替えを行う
+    if ($request->has('sort')) {
+        $sort = $request->input('sort');
+        $query->orderBy($sort);
+    }
+
+    // ページネーションを適用して5件ずつ表示
+    $saunas = $query->with([
+      'facilityType' => function ($query) {
+        $query->select('id', 'type_name');
+      },
+      'usageType' => function ($query) {
+          $query->select('id', 'type_name');
+      },
+      'prefecture' => function ($query) {
+          $query->select('id', 'name');
+      },
+      'saunaInfo' => function ($query) {
+          $query->select('id', 'sauna_id', 'temperature');
+      },
+      'waterBath' => function ($query) {
+          $query->select('id', 'sauna_id','temperature');
+      },
+      'businessHours' => function ($query) {
+          $query->select('id', 'sauna_id','day_of_week', 'opening_time', 'closing_time', 'is_closed');
+      },
+      'imagesFacility' => function ($query) {
+          $query->select('id', 'sauna_id','main_image_url');
+      },
+    ])->paginate(5);
+    logger('$saunas');
+    logger($saunas);
+
+    $data = [
       'saunas' => $saunas,
-      'saunaInfos' => $saunaInfos,
-      'waterBaths' => $waterBaths,
+      'filters' => [
+        'prefecture' => $prefecture,
+        'sauna_temperature_from' => $sauna_temperature_from,
+        'sauna_temperature_to' => $sauna_temperature_to,
+        'water_bath_temperature_from' => $water_bath_temperature_from,
+        'water_bath_temperature_to' => $water_bath_temperature_to,
+      ]
+    ];
+    logger('$data');
+    logger()->info('Sending data to Vue component:', $data);
+
+    return Inertia::render('Sauna/Index', [
+      'saunas' => $saunas,  // 検索結果のデータ
+      'prefectures' => $prefectures,  // 都道府県データ
+      // 検索項目のデータ
+      'filters' => [
+        'prefecture' => $prefecture,
+        'sauna_temperature_from' => $sauna_temperature_from,
+        'sauna_temperature_to' => $sauna_temperature_to,
+        'water_bath_temperature_from' => $water_bath_temperature_from,
+        'water_bath_temperature_to' => $water_bath_temperature_to,
+      ]
     ]);
+    
   }
 
 
@@ -260,12 +373,8 @@ class SaunaController extends Controller
   // 営業時間の各曜日ごとのDB挿入メソッド(put)
   protected function updateBusinessHourData($businessHours, $saunaId)
   {
-      // logger('サウナID');
-      // logger($saunaId);
 
       foreach ($businessHours as $businessHour) {
-        // logger('ビジネスアワー');
-        // logger($businessHour);
 
         // is_closedをboolean型に変換
         $businessHour['is_closed'] = filter_var($businessHour['is_closed'], FILTER_VALIDATE_BOOLEAN);
@@ -278,7 +387,6 @@ class SaunaController extends Controller
         // unset($businessHour['id']); // IDは更新対象外とするため削除
 
         // logger('各曜日のputでの挿入メソッド');
-        // logger($businessHour);
         BusinessHour::where( 'sauna_id', $saunaId)->where( 'day_of_week', $businessHourColumn)->update($businessHour);
       }
   }
@@ -316,9 +424,36 @@ class SaunaController extends Controller
 
   // 詳細表示
   public function show($id){
-    $sauna = Sauna::findOrFail($id);
+    $sauna = Sauna::select('id', 'facility_name', 'facility_type_id', 'usage_type_id', 'prefecture_id', 'address1', 'min_fee');
 
-    return Inertia::render('Sauna/Info');
+    $sauna = $sauna->with([
+      'facilityType' => function ($query) {
+        $query->select('id', 'type_name');
+      },
+      'usageType' => function ($query) {
+          $query->select('id', 'type_name');
+      },
+      'prefecture' => function ($query) {
+          $query->select('id', 'name');
+      },
+      'saunaInfo' => function ($query) {
+          $query->select('id', 'sauna_id', 'sauna_type_id', 'stove_type_id', 'heat_type_id', 'temperature', 'capacity', 'additional_info');
+      },
+      'waterBath' => function ($query) {
+          $query->select('id', 'sauna_id', 'bath_type_id', 'water_type_id', 'temperature', 'capacity', 'deep_water', 'additional_info');
+      },
+      'businessHours' => function ($query) {
+          $query->select('id', 'sauna_id','day_of_week', 'opening_time', 'closing_time', 'is_closed');
+      },
+      'imagesFacility' => function ($query) {
+          $query->select('id', 'sauna_id','main_image_url', 'image1_url', 'image2_url', 'image3_url', 'image4_url', 'image5_url');
+      },
+    ])->findOrFail($id);
+
+    logger($sauna);
+    return Inertia::render('Sauna/Show', [
+      'sauna' => $sauna,
+    ]);
   }
 
   // 詳細編集画面表示
@@ -394,81 +529,12 @@ class SaunaController extends Controller
 
   // 更新処理
   public function update(SaunaRequest $request, $id){
-    logger('updateアクションには入っています');
-    // logger($id);
-    // logger($request);
-
-    // バリデーション後のリクエストの受け取り(SaunaRequest)
-    // Create.vueからフォームを受け取り、sauna_infosテーブル、water_bathsテーブル、business_hoursテーブル、images_facilitiesテーブルに振り分ける
-    // リクエストからデータを取得し、カラム名を変更
-    // $saunaData = $request->only([
-    //   'user_id','facility_name', 'facility_type_id', 'usage_type_id', 'prefecture_id',
-    //   'address1', 'address2', 'address3', 'access_text', 'tel', 'website_url',
-    //   'business_hours_detail', 'min_fee', 'fee_text'
-    // ]);
-
-    // $saunaInfoData = $request->only([
-    //     'sauna_type_id', 'stove_type_id', 'heat_type_id', 'temperature_sauna',
-    //     'capacity_sauna', 'additional_info_sauna'
-    // ]);
-
-    // $waterBathData = $request->only([
-    //     'bath_type_id', 'water_type_id', 'temperature_water', 'capacity_water',
-    //     'deep_water', 'additional_info_water'
-    // ]);
-
-    // // フォームで受け取ったカラム名をDBと合わせる
-    // $saunaInfoKeyMap = [
-    //   'temperature_sauna' => 'temperature',
-    //   'capacity_sauna' => 'capacity',
-    //   'additional_info_sauna' => 'additional_info',
-    // ];
-    
-    // foreach ($saunaInfoKeyMap as $oldKey => $newKey) {
-    //   if (isset($saunaInfoData[$oldKey])) {
-    //       $saunaInfoData[$newKey] = $saunaInfoData[$oldKey];
-    //       unset($saunaInfoData[$oldKey]);
-    //   }
-    // }
-    
-    // $waterBathKeyMap = [
-    //     'temperature_water' => 'temperature',
-    //     'capacity_water' => 'capacity',
-    //     'additional_info_water' => 'additional_info',
-    // ];
-    
-    // foreach ($waterBathKeyMap as $oldKey => $newKey) {
-    //   if (isset($waterBathData[$oldKey])) {
-    //       $waterBathData[$newKey] = $waterBathData[$oldKey];
-    //       unset($waterBathData[$oldKey]);
-    //   }
-    // }
-    
-
-
-
-    // ログに配列を出力する
-    // logger('===========saunasテーブル挿入データ===========');
-    // logger($sauna = Sauna::find($id));
-    // logger('===========saunasテーブル挿入データ===========');
-    // logger($saunaData);
-    // logger('===========saunasテーブル挿入データ===========');
-    // logger($saunaInfoData);
-    // logger('===========sauna_infosテーブル挿入データ===========');
-    // logger($waterBathData);
-    // logger('===========water_bathsテーブル挿入データ===========');
 
     // DBの挿入とトランザクションの設定
     DB::beginTransaction();
     try {
       // モデルを作成してデータを保存
       $sauna = Sauna::find($id);
-      // $sauna->update($saunaData);
-      // $saunaInfo = SaunaInfo::where('sauna_id', $sauna->id)->update($saunaInfoData);
-      // $waterBath = WaterBath::where('sauna_id', $sauna->id)->update($waterBathData);
-
-
-
 
         // サウナの施設情報を抽出
         $saunaData = $this->extractSaunaData($request);
@@ -481,16 +547,6 @@ class SaunaController extends Controller
 
         // 営業時間の情報を抽出
         $businessHours = $this->extractBusinessHourData($request);
-
-
-
-        // logger('updateの中身');
-        // logger($sauna);
-        // logger($saunaData);
-        // logger($saunaInfoData);
-        // logger($waterBathData);
-        // logger($businessHours);
-
 
         // サウナの施設情報をDBに挿入
         $sauna->update($saunaData);
@@ -510,8 +566,6 @@ class SaunaController extends Controller
         // 営業時間の情報をDBに挿入
         $this->updateBusinessHourData($businessHours, $id);
 
-
-
       DB::commit();
       // 成功した場合の処理
       logger('DBの挿入が成功しました');
@@ -524,8 +578,6 @@ class SaunaController extends Controller
         logger($e->getMessage());
         return back()->withInput()->with('error', '登録中にエラーが発生しました。');
     }
-
-    // return redirect()->route('sauna.show', $id);
   }
 
   // 削除
@@ -533,17 +585,12 @@ class SaunaController extends Controller
     return redirect()->route('saunas.index');
   }
 
-
+  // axiosでedit画面表示時にDBデータを取得
   public function getImage($id)
   {
       // 指定されたIDに対応するサウナの画像情報を取得
-      logger('マウント時に取得される');
-      logger('getImageのid');
-      logger($id);
       $sauna = Sauna::findOrFail($id);
       $imagesFacilities = $sauna->imagesFacility()->select('id', 'main_image_url', 'image1_url', 'image2_url', 'image3_url', 'image4_url', 'image5_url')->get();
-      logger('$saunaの内容');
-      logger($sauna);
       // 必要なデータを抽出して返す
       return response()->json([
           'main_image_url' => $imagesFacilities[0]['main_image_url'],

@@ -27,3 +27,6 @@ Route::get('/sauna/{id}', [SaunaController::class, 'getImage']);
 Route::put('/sauna/{id}', [SaunaController::class, 'update']);
 // updateアクションでデータの追加、更新(画像データ)
 Route::post('/sauna/{id}', [SaunaController::class, 'updateImage']);
+Route::post('/sauna/index', [SaunaController::class, 'updateImage']);
+
+
