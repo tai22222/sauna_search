@@ -48,23 +48,9 @@ const formData = ref({
   sauna_temperature_to: initialFilters.sauna_temperature_to || '',
   water_bath_temperature_from: initialFilters.water_bath_temperature_from || '',
   water_bath_temperature_to: initialFilters.water_bath_temperature_to || '',
-})
+});
 
-// 検索ボタンで送信時(routes/api.phpに送信)
-const submitSearch = () => {
-  console.log('Submitted!', formData.value);
-  // データの整形
-  const submitData = {
-    prefecture: formData.value.prefecture,
-    sauna_temperature_from: formData.value.sauna_temperature_from === '選択してください' ? '' : formData.value.sauna_temperature_from,
-    sauna_temperature_to: formData.value.sauna_temperature_to === '選択してください' ? '' : formData.value.sauna_temperature_to,
-    water_bath_temperature_from: formData.value.water_bath_temperature_from === '選択してください' ? '' : formData.value.water_bath_temperature_from,
-    water_bath_temperature_to: formData.value.water_bath_temperature_to === '選択してください' ? '' : formData.value.water_bath_temperature_to,
-  };
-  
-  Inertia.get(`${baseUrl}saunas`, submitData);   // GETリクエストの場合
-}
-
+// 検索の一覧
 // 都道府県
 const prefectureArray = Array.isArray(prefectures) ? prefectures : [prefectures];
 // const selectedPrefecture = ref(null);
@@ -103,21 +89,54 @@ const waterTemp = [
   { id: 30, temp: 30 },
 ];
 
+// 検索、ソート、ページネーションの状態をURLのクエリパラメータに合わせて更新
+const updateDataAndView = (additionalParams = {}) => {
+  // 無効な選択肢をフィルタリング
+  const validParams = Object.fromEntries(
+    Object.entries({ ...formData.value, ...additionalParams })
+    .filter(([key, value]) => value !== '選択してください' && value !== null && value !== '')
+  );
+
+  // クエリパラメータを生成
+  const searchParams = new URLSearchParams(validParams).toString();
+  
+  // サーバーにリクエストを送信
+  Inertia.get(`${baseUrl}saunas?${searchParams}`);
+};
+
+// 検索ボタン押下時の処理
+const submitSearch = () => updateDataAndView();
+
+// ソート機能
+const sortSaunas = (condition, order) => updateDataAndView({ sort: condition, order: order });
+
+// 指定ページへの遷移
+const paginateTo = (page) => updateDataAndView({ page });
+
+
+// ソート機能
+// const sortSaunas = (sort, order) => {
+//   const params = new URLSearchParams(formData.value).toString();
+//   console.log(params);
+//   Inertia.visit(`${baseUrl}saunas?sort=${sort}&order=${order}&${params}`);
+// }
+
+// ページネーション
 // 現在のページ
 const currentPage = ref(1);
 // 表示件数
-const itemsPerPage = ref(2);
+const itemsPerPage = ref(5);
 // 総件数
 const totalSaunaItems = ref(props.saunas.total); 
 // 最終ページの計算
 const totalPages = computed(() => Math.ceil(totalSaunaItems.value / itemsPerPage.value));
 
 // 指定ページへ遷移
-const paginateTo = (page) => {
-  // const baseUrl = import.meta.env.VITE_APP_BASE_URL; 
+const paginateTo1 = (page) => { 
   // 検索項目をURLからクエリ取得
   const params = new URLSearchParams(formData.value).toString();
-  Inertia.visit(`saunas?page=${page}&${params}`, { preserveState: true });
+  console.log(params);
+  Inertia.visit(`saunas?page=${page}&${params}&sort=${initialFilters.sort}&order=${initialFilters.order}`, { preserveState: true });
 };
 
 // 前へボタンのクリック時の処理
@@ -141,7 +160,7 @@ const goToNextPage = () => {
 // 最初のページに移動
 const goToFirstPage = () => {
   const params = new URLSearchParams(formData.value).toString();
-  Inertia.visit('saunas?page=1&${params}', { preserveState: true });
+  Inertia.visit(`saunas?page=1&${params}`, { preserveState: true });
 };
 
 // 最後のページに移動
@@ -177,115 +196,128 @@ console.log(props);
                       <template #title>
                           【検索フォーム】
                       </template>
-
                       <template #description>
                       </template>
 
                       <template #form>
-                          <h3 class="col-span-6 text-xl mb-4">検索フォームの作成(GETにするべき？)</h3>
-                          <p class="col-span-6 text-xl mb-4">地域(prefectures)条件(選択肢)キーワード(TextInput 半角でAND検索)サウナの温度水風呂の温度、検索ボタン</p>
-
                           <!-- 地域(都道府県) select -->
-                          <div class="col-span-2 sm:col-span-2">
+                          <div class="col-span-6 sm:col-span-3 md:col-span-2">
+                            <SelectBox 
+                              id="prefecture" 
+                              label="都道府県 (※必須)" 
+                              column="name"
+                              v-model="formData.prefecture"
+                              :initialValue="initialFilters.prefecture"
+                              :options="prefectureArray" 
+                            />
+                          </div>
+
+                          <!-- 条件(都道府県) select -->
+                          <div class="col-span-6 sm:col-span-3 md:col-span-2">
+                            <SelectBox 
+                              id="condition"
+                              label="条件詳細(開発中)"
+                              v-model="formData.condition"
+                            />
+                          </div>
+
+                          <!-- キーワード input -->
+                          <div class="col-span-6 sm:col-span-6 md:col-span-2">
+                            <InputLabel for="keyword" value="キーワード(開発中)" />
+                            <TextInput
+                              id="keyword"
+                              type="text"
+                              class="mt-1 block w-full"
+                              autocomplete=""
+                              placeholder="例： 大阪 スチームサウナ"
+                              v-model="formData.keyword"
+                            />
+                          </div>
+
+                          <!-- サウナ(温度) select -->
+                          <div class="col-span-6 md:col-span-2 mb-4">
+                            <label for="sauna_temperature" class="w-1/6 text-right">サウナ</label>
+                            <div class="col-span-2 flex items-center">
+                              <div class="w-5/12">
+                                <SelectBox 
+                                  id="sauna_temperature_from"
+                                  v-model="formData.sauna_temperature_from"
+                                  column="temp"
+                                  :initialValue="initialFilters.sauna_temperature_from"
+                                  :options="saunaTemp"
+                                />
+                              </div>
+                              <span class="mx-2">〜</span>
+                              <div class="w-5/12">
+                                <SelectBox 
+                                  id="sauna_temperature_to"
+                                  v-model="formData.sauna_temperature_to"
+                                  column="temp"
+                                  :initialValue="initialFilters.sauna_temperature_to"
+                                  :options="saunaTemp"
+                                />
+                              </div>
+                              <span class="mx-2 block">度</span>
+                            </div>
+                          </div>
+
+                            <!-- 水風呂(温度) select -->
+                            <div class="col-span-6 md:col-span-2 ">
+                              <label for="water_bath_temperature" class="w-1/6 text-right">水風呂</label>
+                              <div class="col-span-2 flex items-center">
+                                <div class="w-5/12">
                                   <SelectBox 
-                                    id="prefecture" 
-                                    label="都道府県 (※必須)" 
-                                    column="name"
-                                    v-model="formData.prefecture"
-                                    :initialValue="initialFilters.prefecture"
-                                    :options="prefectureArray" 
+                                    id="water_bath_temperature_from"
+                                    v-model="formData.water_bath_temperature_from"
+                                    column="temp"
+                                    :initialValue="initialFilters.water_bath_temperature_from"
+                                    :options="waterTemp"
                                   />
                                 </div>
-
-                                <!-- 条件(都道府県) select -->
-                                <div class="col-span-2 sm:col-span-2">
+                                <span class="mx-2">〜</span>
+                                <div class="w-5/12">
                                   <SelectBox 
-                                    id="condition"
-                                    label="条件詳細(開発中)"
-                                    v-model="formData.condition"
+                                    id="water_bath_temperature_to"
+                                    v-model="formData.water_bath_temperature_to"
+                                    column="temp"
+                                    :initialValue="initialFilters.water_bath_temperature_to"
+                                    :options="waterTemp"
                                   />
                                 </div>
+                                <span class="mx-2">度</span>
+                              </div>
+                            </div>
 
-                                <!-- キーワード input -->
-                                <div class="col-span-2 sm:col-span-2">
-                                  <InputLabel for="keyword" value="キーワード(開発中)" />
-                                  <TextInput
-                                    id="keyword"
-                                    type="text"
-                                    class="mt-1 block w-full"
-                                    autocomplete=""
-                                    placeholder="例： 大阪 スチームサウナ"
-                                    v-model="formData.keyword"
-                                  />
-                                </div>
-
-                                <!-- サウナ(温度) select -->
-                                <div class="col-span-2 mb-4">
-                                  <label for="sauna_temperature" class="w-1/6 text-right">サウナ</label>
-                                  <div class="col-span-2 flex items-center">
-                                    <div class="w-5/12">
-                                      <SelectBox 
-                                        id="sauna_temperature_from"
-                                        v-model="formData.sauna_temperature_from"
-                                        column="temp"
-                                        :initialValue="initialFilters.sauna_temperature_from"
-                                        :options="saunaTemp"
-                                      />
-                                    </div>
-                                    <span class="mx-2">〜</span>
-                                    <div class="w-5/12">
-                                      <SelectBox 
-                                        id="sauna_temperature_to"
-                                        v-model="formData.sauna_temperature_to"
-                                        column="temp"
-                                        :initialValue="initialFilters.sauna_temperature_to"
-                                        :options="saunaTemp"
-                                      />
-                                    </div>
-                                    <span class="mx-2 block">度</span>
-                                  </div>
-
-                                </div>
-
-                                <!-- 水風呂(温度) select -->
-                                <div class="col-span-2">
-                                  <label for="water_bath_temperature" class="w-1/6 text-right">水風呂</label>
-                                  <div class="col-span-2 flex items-center">
-                                    <div class="w-5/12">
-                                      <SelectBox 
-                                        id="water_bath_temperature_from"
-                                        v-model="formData.water_bath_temperature_from"
-                                        column="temp"
-                                        :initialValue="initialFilters.water_bath_temperature_from"
-                                        :options="waterTemp"
-                                      />
-                                    </div>
-                                    <span class="mx-2">〜</span>
-                                    <div class="w-5/12">
-                                      <SelectBox 
-                                        id="water_bath_temperature_to"
-                                        v-model="formData.water_bath_temperature_to"
-                                        column="temp"
-                                        :initialValue="initialFilters.water_bath_temperature_to"
-                                        :options="waterTemp"
-                                      />
-                                    </div>
-                                    <span class="mx-2">度</span>
-                                  </div>
-                                </div>
-
-                                <!-- 検索ボタン submit→POSTかGET -->
-                                <div class="col-span-2 sm:col-span-1">
-                                  <button 
-                                    type="button" 
-                                    class="btn btn-primary bg-blue-400 px-12 py-6 rounded-full font-bold text-white hover:bg-opacity-75 hover:shadow-lg active:scale-95 transition duration-150 ease-in-out" 
-                                    @click="submitSearch">検索</button>
-                                </div>
-
+                            <!-- 検索ボタン submit→POSTかGET -->
+                            <div class="col-span-6 md:col-span-2 bg-blue-400 rounded-full text-center min-h-12 ">
+                              <button 
+                                type="button" 
+                                class="btn btn-primary font-bold w-full h-full text-white rounded-full hover:bg-opacity-75 hover:shadow-lg active:scale-95 transition duration-150 ease-in-out" 
+                                @click="submitSearch">検索</button>
+                            </div>
                       </template>
                   </FormSection>
+
                     <div class="flex justify-end mr-6 mb-6">
-                      <span>表示: {{ saunas.from }} - {{ saunas.to }} / {{ saunas.total }} 件</span>
+                      <div>
+                        並び順：
+                        <ul>
+                          <!-- <li @click="sortSaunas('likes', 'desc')">いいね！多い順</li> -->
+                          <!-- <li @click="sortSaunas('reviews', 'desc')">サ活多い順</li> -->
+                          <li @click="sortSaunas('saunaTemp', 'desc')">サウナの温度が高い順</li>
+                          <li @click="sortSaunas('saunaTemp', 'asc')">サウナの温度が低い順</li>
+                          <li @click="sortSaunas('waterTemp', 'asc')">水風呂の温度が低い順</li>
+                          <li @click="sortSaunas('waterTemp', 'desc')">水風呂の温度が高い順</li>
+                          <li @click="sortSaunas('min_fee', 'asc')">入浴料が低い順</li>
+                          <li @click="sortSaunas('min_fee', 'desc')">入浴料が高い順</li>
+                          <li @click="sortSaunas('createdAt', 'desc')">新しく登録順</li>
+                          <li @click="sortSaunas('updatedAt', 'desc')">新しく更新順</li>
+                        </ul>
+                      </div>
+                      
+                      <div>
+                        <span>表示: {{ saunas.from }} - {{ saunas.to }} / {{ saunas.total }} 件</span>
+                      </div>
                     </div>
 
                     <!-- 検索結果。一覧の表示(カードコンポーネント作成し、v-forで繰り返し処理) -->

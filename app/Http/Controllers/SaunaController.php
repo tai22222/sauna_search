@@ -34,6 +34,8 @@ class SaunaController extends Controller
 {
   // 一覧表示
   public function index(Request $request){
+    logger('$requestの中身');
+    logger($request);
     $prefectures = Prefecture::select('id', 'name')->where('delete_flag', 0)->get();
     // サウナ情報のクエリを取得
     $query = Sauna::select('id', 'facility_name', 'facility_type_id', 'usage_type_id', 'prefecture_id', 'address1', 'min_fee');
@@ -47,18 +49,18 @@ class SaunaController extends Controller
     $water_bath_temperature_from = $request->input('water_bath_temperature_from');
     $water_bath_temperature_to = $request->input('water_bath_temperature_to');
 
+    $sort = $request->input('sort');
+    $order = $request->input('order');
+
 
     // 検索条件がある場合はフィルタリングを行う
-    // if ($request->has('keyword')) {
-    //     $keyword = $request->input('keyword');
-    //     $query->where('facility_name', 'like', "%$keyword%");
-    // }
+    if ($request->has('sort') && $request->has('order')) {
+        $query->orderBy($request->sort, $request->order);
+    }
 
     // 都道府県に関する検索条件
     if ($request->filled('prefecture')) {
-      $query->where('prefecture_id', $request->input('prefecture'));
-      logger('prefectureで検索');
-      logger($query->toSql());
+      $query->where('prefecture_id', $prefecture);
     }
 
     // サウナの温度に関する検索条件
@@ -97,11 +99,16 @@ class SaunaController extends Controller
       });
     }
 
-    // ソート条件がある場合は並び替えを行う
-    if ($request->has('sort')) {
-        $sort = $request->input('sort');
-        $query->orderBy($sort);
+    // ソート条件の適用
+    if ($request->filled('sort') && $request->filled('order')) {
+      $query->orderBy($sort, $order);
     }
+
+    // ソート条件がある場合は並び替えを行う
+    // if ($request->has('sort')) {
+    //     $sort = $request->input('sort');
+    //     $query->orderBy($sort);
+    // }
 
     // ページネーションを適用して5件ずつ表示
     $saunas = $query->with([
@@ -127,8 +134,6 @@ class SaunaController extends Controller
           $query->select('id', 'sauna_id','main_image_url');
       },
     ])->paginate(5);
-    logger('$saunas');
-    logger($saunas);
 
     $data = [
       'saunas' => $saunas,
@@ -153,6 +158,9 @@ class SaunaController extends Controller
         'sauna_temperature_to' => $sauna_temperature_to,
         'water_bath_temperature_from' => $water_bath_temperature_from,
         'water_bath_temperature_to' => $water_bath_temperature_to,
+        // ソートデータ
+        'sort' => $sort,
+        'order' => $order,
       ]
     ]);
     
@@ -424,7 +432,7 @@ class SaunaController extends Controller
 
   // 詳細表示
   public function show($id){
-    $sauna = Sauna::select('id', 'facility_name', 'facility_type_id', 'usage_type_id', 'prefecture_id', 'address1', 'min_fee');
+    $sauna = Sauna::select('id', 'facility_name', 'facility_type_id', 'usage_type_id', 'prefecture_id', 'address1', 'address2' , 'address3', 'access_text','tel', 'website_url', 'business_hours_detail', 'min_fee', 'fee_text');
 
     $sauna = $sauna->with([
       'facilityType' => function ($query) {
@@ -439,8 +447,23 @@ class SaunaController extends Controller
       'saunaInfo' => function ($query) {
           $query->select('id', 'sauna_id', 'sauna_type_id', 'stove_type_id', 'heat_type_id', 'temperature', 'capacity', 'additional_info');
       },
+      'saunaInfo.saunaType' => function ($query) {
+        $query->select('id', 'type_name');
+      },
+      'saunaInfo.stoveType' => function ($query) {
+        $query->select('id', 'type_name');
+      },
+      'saunaInfo.heatType' => function ($query) {
+        $query->select('id', 'source_name');
+      },
       'waterBath' => function ($query) {
           $query->select('id', 'sauna_id', 'bath_type_id', 'water_type_id', 'temperature', 'capacity', 'deep_water', 'additional_info');
+      },
+      'waterBath.waterType' => function ($query) {
+        $query->select('id', 'type_name');
+      },
+      'waterBath.bathType' => function ($query) {
+        $query->select('id', 'type_name');
       },
       'businessHours' => function ($query) {
           $query->select('id', 'sauna_id','day_of_week', 'opening_time', 'closing_time', 'is_closed');

@@ -17,13 +17,6 @@ export default defineConfig({
             },
         }),
     ],
-    server: {
-        watch: {
-            // 3秒間の更新がない場合にまとめて更新する
-            // (ミリ秒単位で指定)
-            interval: 3000,
-        },
-    },
 });
 
 
