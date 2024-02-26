@@ -38,7 +38,7 @@ class SaunaController extends Controller
     logger($request);
     $prefectures = Prefecture::select('id', 'name')->where('delete_flag', 0)->get();
     // サウナ情報のクエリを取得
-    $query = Sauna::select('id', 'facility_name', 'facility_type_id', 'usage_type_id', 'prefecture_id', 'address1', 'min_fee');
+    $query = Sauna::select('id', 'facility_name', 'facility_type_id', 'usage_type_id', 'prefecture_id', 'address1', 'min_fee', 'created_at', 'updated_at');
 
     // 検索結果の取得
     $prefecture = $request->input('prefecture');

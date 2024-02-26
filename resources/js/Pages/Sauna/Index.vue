@@ -304,14 +304,14 @@ console.log(props);
                         <ul>
                           <!-- <li @click="sortSaunas('likes', 'desc')">いいね！多い順</li> -->
                           <!-- <li @click="sortSaunas('reviews', 'desc')">サ活多い順</li> -->
-                          <li @click="sortSaunas('saunaTemp', 'desc')">サウナの温度が高い順</li>
+                          <!-- <li @click="sortSaunas('saunaTemp', 'desc')">サウナの温度が高い順</li>
                           <li @click="sortSaunas('saunaTemp', 'asc')">サウナの温度が低い順</li>
                           <li @click="sortSaunas('waterTemp', 'asc')">水風呂の温度が低い順</li>
-                          <li @click="sortSaunas('waterTemp', 'desc')">水風呂の温度が高い順</li>
+                          <li @click="sortSaunas('waterTemp', 'desc')">水風呂の温度が高い順</li> -->
                           <li @click="sortSaunas('min_fee', 'asc')">入浴料が低い順</li>
                           <li @click="sortSaunas('min_fee', 'desc')">入浴料が高い順</li>
-                          <li @click="sortSaunas('createdAt', 'desc')">新しく登録順</li>
-                          <li @click="sortSaunas('updatedAt', 'desc')">新しく更新順</li>
+                          <li @click="sortSaunas('created_at', 'desc')">新しく登録順</li>
+                          <li @click="sortSaunas('updated_at', 'desc')">新しく更新順</li>
                         </ul>
                       </div>
                       
