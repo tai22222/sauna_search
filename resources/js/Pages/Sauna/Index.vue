@@ -177,6 +177,7 @@ const formatTime = (time) => {
 }
 
 console.log(props);
+console.log(baseUrl);
 </script>
 
 <template>
@@ -299,9 +300,9 @@ console.log(props);
                   </FormSection>
 
                     <div class="flex justify-end mr-6 mb-6">
-                      <div>
-                        並び順：
-                        <ul>
+                      <div class="mr-4">
+                        並び順：準備中
+                        <ul class="hidden">
                           <!-- <li @click="sortSaunas('likes', 'desc')">いいね！多い順</li> -->
                           <!-- <li @click="sortSaunas('reviews', 'desc')">サ活多い順</li> -->
                           <!-- <li @click="sortSaunas('saunaTemp', 'desc')">サウナの温度が高い順</li>
@@ -323,14 +324,15 @@ console.log(props);
                     <!-- 検索結果。一覧の表示(カードコンポーネント作成し、v-forで繰り返し処理) -->
                     <div class="mb-16 px-4 py-5 bg-white sm:p-20 shadow">
                       <div v-for="sauna in props.saunas.data">
-                        <div class="flex mb-8">
+                        <div class="block mb-8 md:flex">
                           <!-- メイン画像 -->
-                          <div class="w-80 mr-4">
+                          <div class="w-80 mr-4 mb-4">
                             <a class="block rounded w-full bg-cover bg-no-repeat bg-center w-64 h-auto"
                                :href="`${baseUrl}saunas/${sauna.id}`"
-                               :style="{ backgroundImage: `url(${sauna.images_facility?.main_image_url ? `http://localhost/storage/${sauna.images_facility.main_image_url}` : 'http://localhost/storage/default-images/no_image.jpg'})`,
+                               :style="{ backgroundImage: `url(${sauna.images_facility?.main_image_url ? `${baseUrl}/storage/${sauna.images_facility.main_image_url}` : `${baseUrl}/storage/default-images/no_image.jpg`})`,
                                paddingBottom: '100%' }"></a>
                           </div>
+
                         <!-- 施設情報 -->
                         <div class="grid grid-cols-6 w-full">
                           <div class="col-span-6 ml-8">
@@ -370,29 +372,47 @@ console.log(props);
                       <div>
                         <!-- ページネーション -->
                         <nav>
-                          <ul class="flex justify-center space-x-6">
+                          <ul class="flex justify-center space-x-2 md:space-x-6">
                             <!-- 最初のページまで遷移 -->
-                            <li v-if="saunas.current_page > 1">
+                            <li v-if="saunas.current_page > 1"
+                                class="w-12 h-12">
                               <a @click.prevent="goToFirstPage()" 
-                                class="flex items-center justify-center w-12 h-12 bg-gray-200 hover:bg-gray-300 rounded-full"
+                                class="flex items-center justify-center w-full h-full bg-gray-200 hover:bg-gray-300 rounded-full"
                                 href="#">&lt;&lt;</a>
                             </li>
                             <!-- 1ページ前へ遷移 -->
                             <li v-if="saunas.current_page > 1">
                               <a @click.prevent="goToPreviousPage()"
-                                class="flex items-center justify-center w-12 h-12 bg-gray-200 hover:bg-gray-300 rounded-full"
+                                class="flex items-center px-0 justify-center w-12 h-full bg-gray-200 hover:bg-gray-300 rounded-full"
                                 href="#">&lt;</a>
                             </li>
+
                             <!-- 現在のページから（数字は正方形のままで、現在のページだけ特別なスタイルを適用）-->
-                            <li v-for="page in saunas.last_page"
+                            <div v-if="saunas.last_page <= 5"
+                            class="flex justify-center space-x-2 md:space-x-6">
+                              <li v-for="page in saunas.last_page"
                                 :key="page"
                                 :class="page === saunas.current_page ? 'bg-blue-500 text-white' : 'bg-gray-200 hover:bg-gray-300'"
-                                class="w-12 h-12 flex items-center justify-center rounded-full">
-                              <a @click.prevent="paginateTo(page)"
-                                class="block rounded-full"
-                                :class="page === saunas.current_page ? 'pointer-events-none' : 'rounded-full'"
-                                href="#">{{ page }}</a>
-                            </li>
+                                class="w-12 h-12 rounded-full">
+                                <a @click.prevent="paginateTo(page)"
+                                  class="block flex items-center justify-center rounded-full w-full h-full "
+                                  :class="page === saunas.current_page ? 'pointer-events-none' : 'rounded-full'"
+                                  href="#">{{ page }}</a>
+                              </li>
+                            </div>
+                            <div v-else-if="saunas.last_page > 5"
+                              class="flex justify-center space-x-2 md:space-x-6">
+                              <li v-for="page in 5"
+                                :key="page"
+                                :class="page === saunas.current_page ? 'bg-blue-500 text-white' : 'bg-gray-200 hover:bg-gray-300'"
+                                class="w-12 h-12 rounded-full">
+                                <a @click.prevent="paginateTo(page)"
+                                  class="block flex items-center justify-center rounded-full w-full h-full "
+                                  :class="page === saunas.current_page ? 'pointer-events-none' : 'rounded-full'"
+                                  href="#">{{ page }}</a>
+                              </li>
+                            </div>
+
                             <!-- 1ページ次へ遷移 -->
                             <li v-if="saunas.current_page < saunas.last_page">
                               <a @click.prevent="goToNextPage()"

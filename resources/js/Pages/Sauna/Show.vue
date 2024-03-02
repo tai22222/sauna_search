@@ -230,8 +230,8 @@ console.log(props);
                         <div class="col-span-1 mr-6">
                           <div class="w-96">
                             <span class="block rounded w-full bg-cover bg-no-repeat bg-center" 
-                                  :style="{ backgroundImage: `url(http://localhost/storage/${sauna.images_facility.main_image_url})`, paddingBottom: '100%' }"></span>
-                            <img :src="`http://localhost/storage/default-images/no_image.jpg`" 
+                                  :style="{ backgroundImage: `url(${baseUrl}/storage/${sauna.images_facility.main_image_url})`, paddingBottom: '100%' }"></span>
+                            <img :src="`${baseUrl}/storage/default-images/no_image.jpg`" 
                                         :alt="sauna.facility_name" 
                                         class="rounded w-full object-cover">
                           </div>
@@ -311,7 +311,7 @@ console.log(props);
                           <div v-if="image.image_url">
                             <p>{{ image.alt }}</p>
                               <span class="block rounded w-full bg-cover bg-no-repeat bg-center"
-                                    :style="{ backgroundImage: `url(http://localhost/storage/${image.image_url})`, 
+                                    :style="{ backgroundImage: `url(${baseUrl}/storage/${image.image_url})`, 
                                     paddingBottom: '100%' }"></span>
                             </div>
                           </div>
