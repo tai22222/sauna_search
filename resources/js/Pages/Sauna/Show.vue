@@ -1,10 +1,16 @@
 <script setup>
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { ref, computed, defineProps } from 'vue';
-import { usePage } from '@inertiajs/vue3';
+import { usePage, useForm } from '@inertiajs/vue3';
 import { Inertia } from '@inertiajs/inertia'
 
 import SectionBorder from '@/Components/SectionBorder.vue';
+import FormSection from '@/Components/FormSection.vue';
+import InputError from '@/Components/InputError.vue';
+import InputLabel from '@/Components/InputLabel.vue';
+import SecondaryButton from '@/Components/SecondaryButton.vue';
+import TextInput from '@/Components/TextInput.vue';
+import Textarea from '@/Components/Textarea.vue';
 
 // ベースURLの設定
 const baseUrl = import.meta.env.VITE_APP_BASE_URL; 
@@ -100,24 +106,30 @@ const bathType = computed(() => {
 
 //営業時間のフォーマット変換(DBから渡ってくるのはH:i:sなのでH:iに変更、24時を回っている時は翌○○時の記述に変換)
 const formattedBusinessHours = computed(() => {
-  if(sauna.business_hours && (sauna.business_hours.opening_time || sauna.business_hours.closing_time) ){
-    return props.sauna.business_hours.map((hour) => {
-    let openingTime = hour.opening_time.substr(0, 5);
-    let closingTime = hour.closing_time.substr(0, 5);
-    let nextDay = '';
+  let formattedArray = []; // 整形されたデータを保持するための配列
+  if(sauna.business_hours){
 
-    // 終了時間が開始時間より前の場合、"翌"を追加
-    if (hour.closing_time < hour.opening_time) {
-      nextDay = '翌';
-    }
+    for(const index in sauna.business_hours){
+      if(sauna.business_hours[index].opening_time || sauna.business_hours[index].closing_time){
+        let openingTime = sauna.business_hours[index].opening_time.substr(0, 5);
+        let closingTime = sauna.business_hours[index].closing_time.substr(0, 5);
+        let nextDay = '';
 
-    return {
-      ...hour,
-      opening_time: openingTime,
-      closing_time: `${nextDay}${closingTime}`
+        // 終了時間が開始時間より前の場合、"翌"を追加
+        if (sauna.business_hours[index].closing_time < sauna.business_hours[index].opening_time) {
+          nextDay = '翌';
+        }
+
+        let formattedItem = {
+          ...sauna.business_hours[index],
+          opening_time: openingTime,
+          closing_time: `${nextDay}${closingTime}`
+        };
+        formattedArray.push(formattedItem)
+      }
     };
-  });
   }
+  return formattedArray;
 });
 
 // 施設画像
@@ -129,6 +141,103 @@ const images = [
   {'image_url': sauna.images_facility.image4_url, 'alt': 'サウナ施設関連画像'},
   {'image_url': sauna.images_facility.image5_url, 'alt': 'サウナ施設関連画像'},
 ];
+
+const writeBoard = ref(false);
+// サ活の投稿をクリック時に投稿画面表示
+const openWriteReview = () => {
+  //ログインしているかどうかの判定
+  if(!auth.user){
+    Inertia.visit('/login');
+  } else {
+    writeBoard.value = true;
+  }
+}
+
+const closeWriteBoard = () => {
+  writeBoard.value = false;
+}
+
+const photoInput = ref(null);
+const photoPreview = ref(null);
+
+// 画像選択ボタンを押した時に、input要素を取得してクリック
+const selectNewPhoto = () => {
+    photoInput.value.click();
+};
+
+// 写真が変更された時(プレビュー時点)
+const updatePhotoPreview = () => {
+    const photo = photoInput.value.files[0];
+    // clearPhotoFileInput実行時
+    if (! photo) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        // data:オブジェクトとして格納
+        photoPreview.value = e.target.result;
+    };
+    // FileまたはBlobオブジェクトを読み込み、読み込まれたデータをBase64エンコーディングされた文字列としてresultプロパティに格納
+    reader.readAsDataURL(photo);
+};
+
+// 画像のプレビュー表示をクリア(form送信前)
+const clearPhotoFileInput = () => {
+    if (photoInput.value.value) {
+        photoInput.value.value = null;
+        photoPreview.value = null;
+    }
+};
+
+// フォームデータ(画像以外のリアクティブなデータを明示)
+const {data, post, processing, errors } = useForm({
+  user_id: auth.user.id,
+  sauna_id: sauna.id,
+
+  visited_date: '',
+  title: '',
+  content: '',
+})
+
+// フォームデータの送信ボタンクリックでルーティング経由のControllerへ
+const createReview = () => {
+  // 画像データの送信がある場合はuseFormフックのpostメソッドでは送れないため、FormDataオブジェクトに格納して送信する
+  const formData = new FormData();
+
+  // useFormで定義した画像以外のデータをFormDataオブジェクトに追加
+  for(const key in data) {
+    formData.append(key, data[key]);
+  }
+
+  // フォームデータに各フィールド(FormSectionにないデータ)を追加
+  formData.append('user_id', auth.user.id);
+  formData.append('sauna_id', sauna.id);
+
+  if(photoInput.value.files[0]) {
+    formData.append('review_image', photoInput.value.files[0]);
+  }
+
+  // フォームデータの中身を確認
+  // console.log('formData');
+  // for (let [key, value] of formData.entries()) {
+  // console.log(key, value);
+  // }
+
+  Inertia.post(route('review.store', sauna.id), formData, {
+    onSuccess: () => {
+      console.log('送信成功');
+    },
+    onError: () => {
+      console.log('送信失敗');
+    },
+    forceFormData: true,
+  })
+}
+
+
+const count = ref(data.content);
+// 文字数のカウント
+const updateCount = () => {
+  count.value = data.content.length;
+}
 
 // 編集ページへ遷移
 const goToEditPage = () => {
@@ -142,11 +251,10 @@ const goToEditPage = () => {
   }
 };
 
+// 戻るボタン
 const goBack = () => {
   window.history.back();
 }
-
-console.log(props);
 </script>
 
 <template>
@@ -157,191 +265,323 @@ console.log(props);
             </h2>
         </template>
 
-        <div>
-          <div class="max-w-7xl mx-auto py-10 sm:px-6 lg:px-8">
-              <div v-if="$page.props.jetstream.canUpdateProfileInformation">
+        <div class="relative">
+          
 
-                    <div class="flex justify-end mr-6 mb-6">
-                      <!-- <span>表示: {{ saunas.from }} - {{ saunas.to }} / {{ saunas.total }} 件</span> -->
-                      <div class="">
-                        <a @click.prevent="goToEditPage()"
-                                class="flex items-center justify-center px-2 py-1 hover:bg-gray-300 border-b-2"
-                                href="#">施設情報の編集</a>
+          <div v-show="writeBoard" 
+               @click.prevent="closeWriteBoard()"
+               class="absolute bg-gray-800/40 h-full w-full">
+            <div @click.stop class="max-w-5xl mx-auto pt-24">
+              <div>
+                <FormSection @submitted="createReview">
+                        <template #title>
+                        </template>
+
+                        <template #description>
+                        </template>
+
+                        <template #form>
+                            <h3 class="col-span-6 text-xl font-black mb-4 text-center py-4">{{ sauna.facility_name }}</h3>
+                            <!-- 整い日 -->
+                            <div class="col-span-3">
+                                <InputLabel for="visited_date" value="整い日" />
+                                <TextInput
+                                    id="visited_date"
+                                    v-model="data.visited_date"
+                                    type="date"
+                                    class="mt-1 block w-full"
+                                />
+                                <InputError  class="mt-2" />
+                            </div>
+
+                            <!-- タイトル -->
+                            <div class="col-span-6">
+                                <InputLabel for="title" value="タイトル" />
+                                <TextInput
+                                    id="title"
+                                    v-model="data.title"
+                                    type="text"
+                                    class="mt-1 block w-full"
+                                    placeholder="施設の綺麗さ、価格。サウナの温度が最高"
+                                />
+                                <InputError  class="mt-2" />
+                            </div>
+
+                            <!-- レビュー詳細 -->
+                            <div class="col-span-6">
+                                <InputLabel for="content" value="サ活 / レビュー" />
+                                <Textarea
+                                    id="content"
+                                    v-model="data.content"
+                                    @input="updateCount"
+                                    type="textarea"
+                                    class="mt-1 block w-full min-h-80"
+                                    placeholder="友達のおすすめのサウナに初サ活！
+仕事終わりの20時くらいに訪れましたが、思ったより混んでいなかった。
+サウナの温度は95度と自分の中のベストだったので、ポイントアップ！
+
+1時間に1回スタッフさんによるロウリュウがあり
+105度くらいまで上がりました。
+
+水風呂は10度くらいで、その後近くのベンチで整い。
+今回も3セットやり大大大満足。
+
+お風呂を出てからせっかくなのでご飯を！
+友達のおすすめが自分のおすすめにもなりました！
+
+"
+                                />
+                                <div> <span v-if="count" :class="{'text-red-500': data.content.length > 500}">{{ count }}</span><span v-else="!count">0</span> / 500文字</div>
+                                <InputError  class="mt-2" />
+                            </div>
+
+                            <!-- 画像 -->
+                            <div class="col-span-1">
+                              画像
+                            </div>
+                            <div class="col-span-2">
+                              <input type="file"
+                                     ref="photoInput"
+                                     class="hidden"
+                                     @change="updatePhotoPreview"
+                              >
+
+                              <div v-if="photoPreview">
+                                <span
+                                  class="block rounded w-full bg-cover bg-no-repeat bg-center"
+                                  :style="{ backgroundImage: `url(${photoPreview})`,
+                                  paddingBottom: '100%' }"
+                                />
+                              </div>
+
+
+                              <!-- 施設画像追加・削除ボタン -->
+                              <SecondaryButton class="mt-2 mr-2" type="button" @click.prevent="selectNewPhoto()">
+                                  画像を選択
+                              </SecondaryButton>
+
+                              <SecondaryButton
+                                  v-if="photoPreview"
+                                  type="button"
+                                  class="mt-2"
+                                  bgColor="bg-red-300"
+                                  @click.prevent="clearPhotoFileInput()"
+                              >
+                                  削除
+                              </SecondaryButton>
+                              <!-- <InputError :message="form.errors.photo" class="mt-2" /> -->
+                            </div>
+
+
+                        </template>
+
+                        <template #actions>
+                          <button 
+                                class="inline-flex items-center px-12 py-3 bg-white border-2 border-gray-500 rounded-md font-semibold text-xs text-gray-800 uppercase tracking-widest 
+                                hover:bg-gray-300/70 hover:text-white focus:bg-gray-500 focus:text-white active:bg-gray-500/70 active:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
+                            サ活の投稿
+                        </button>
+                        </template>
+
+
+                    </FormSection>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <div class="max-w-7xl mx-auto py-10 sm:px-6 lg:px-8">
+                <div v-if="$page.props.jetstream.canUpdateProfileInformation">
+
+                      <div class="flex justify-end mr-6 mb-6">
+                        <div class="px-4  py-2 text-gray font-bold border-b-4 border-gray-900 hover:border-gray-600/90 rounded-lg">
+                          <a @click.prevent="goToEditPage()"
+                                  class="flex items-center justify-center w-full"
+                                  href="#">施設情報の編集</a>
+                        </div>
                       </div>
-                    </div>
 
-                    <div class="mb-16 px-4 py-5 bg-white sm:p-20 shadow rounded-2xl">
-                      <div class="grid grid-cols-6 gap-4">
-                        <div class="col-span-6 text-3xl font-bold">
-                          {{ sauna.facility_name }}
-                        </div>
-                        <div class="col-span-1">
-                          {{ sauna.facility_type.type_name}}
-                        </div>
-                        <div class="col-span-2">
-                          {{ sauna.prefecture.name }} - {{ sauna.address1 }}
-                        </div>
-                        <!-- <div class="col-span-6">
-                          <button>Twitterツイート</button>
-                          <button>フェイスブックシェア</button>
-                        </div> -->
-                        <div class="col-span-6">
-                          <ul class="grid grid-cols-4 text-xl">
-                            <li><a href="" class="border-b-4 border-blue-200">施設情報</a></li>
-                            <li><a href="">サ活</a></li>
-                            <li><a href="">サウナ飯</a></li>
-                          </ul>
-                        </div>
-                      </div>
+                      <div class="mb-16 px-4 py-5 bg-white sm:p-20 shadow rounded-2xl">
+                        <div class="flex justify-between mb-8">
+                          <div class="flex px-4 py-2">
+                            <div class="pr-8">
+                              <button class="px-4 py-2 text-gray hover:bg-blue-400 hover:text-white font-bold border-2 rounded-lg">ツイートする</button>
+                            </div>
+                            <div>
+                              <button class="px-4 py-2  text-gray hover:bg-blue-400 hover:text-white font-bold border-2 rounded-lg">シェアする</button>
+                            </div>
+                          </div>
 
-                      <SectionBorder />
-
-                      <div class="grid grid-cols-2 gap-16 mb-12">
-                        <div class="md:col-span-1 col-span-2 px-6 py-6 border-2 rounded-xl text-center">
-                          <div class="mb-2 text-xl font-bold text-red-500">サウナ室</div>
-                          <div class="mb-2">温度<span class="text-3xl text-red-500">{{ saunaTemperature }}</span><span class="text-red-500">度</span></div>
-                          <div class="mb-2">収容人数： {{ saunaCapacity }} 人</div>
-                          <div class="mb-4">
-                            <ul class="flex justify-center text-white">
-                              <li v-if="saunaType" class="bg-gray-400 px-2 py-1 font-bold border-2 rounded-2xl">{{ saunaType }}</li>
-                              <li v-if="stoveType" class="bg-gray-400 px-2 py-1 font-bold border-2 rounded-2xl">{{ stoveType }}</li>
-                              <li v-if="heatType" class="bg-gray-400 px-2 py-1 font-bold border-2 rounded-2xl">{{ heatType }}</li>
+                          <div class="flex px-4 py-2">
+                            <div class="pr-8">
+                              <button class="px-4 py-2  text-blue-600 hover:bg-blue-600 hover:text-white font-bold border-2 border-blue-600 rounded-lg">お気に入り</button>
+                            </div>
+                            <div>
+                              <button @click.prevent="openWriteReview()" class="px-4 py-2  bg-gray-800 hover:bg-gray-800/80 text-white font-bold rounded-lg">サ活の投稿</button>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="grid grid-cols-6 gap-2">
+                          <div class="col-span-6 text-3xl font-bold">
+                            {{ sauna.facility_name }}
+                          </div>
+                          <div class="col-span-6">
+                            {{ sauna.facility_type.type_name}}
+                          </div>
+                          <div class="col-span-2 mb-4">
+                            {{ sauna.prefecture.name }} - {{ sauna.address1 }}
+                          </div>
+                          <!-- <div class="col-span-6">
+                            <button>Twitterツイート</button>
+                            <button>フェイスブックシェア</button>
+                          </div> -->
+                          <div class="col-span-6">
+                            <ul class="grid grid-cols-4 text-xl">
+                              <li><a href="" class="border-b-4 border-blue-200">施設情報</a></li>
+                              <li><a href="">サ活(準備中)</a></li>
+                              <li><a href="">サウナ飯(準備中)</a></li>
                             </ul>
                           </div>
-                          <div>{{ saunaAdditionalInfo }}</div>
                         </div>
-                        <div class="md:col-span-1 col-span-2 px-6 py-6 border-2 rounded-xl text-center">
-                          <div class="mb-2 text-xl font-bold text-blue-500">水風呂情報</div>
-                          <div class="mb-2">温度<span class="text-3xl text-blue-500">{{ waterBathTemperature }}</span><span class="text-blue-500">度</span></div>
-                          <div class="mb-2">収容人数： {{ waterBathCapacity }} 人</div>
-                          <div class="mb-4">
-                            <ul class="flex justify-center text-white">
-                              <li v-if="waterType" class="bg-gray-400 px-2 py-1 font-bold border-2 rounded-2xl">{{ waterType }}</li>
-                              <li v-if="bathType" class="bg-gray-400 px-2 py-1 font-bold border-2 rounded-2xl">{{ bathType }}</li>
-                              <li v-if="waterDepth" class="bg-gray-400 px-2 py-1 font-bold border-2 rounded-2xl">{{ waterDepth }}</li>
-                            </ul>
-                          </div>
-                          <div>{{ waterBathAdditionalInfo }}</div>
-                        </div>
-                      </div>
 
-                      <div class="grid grid-cols-2 gap-6 mb-12">
-                        <div class="col-span-2">基本情報</div>
-                        <div class="col-span-1 mr-6">
-                          <div class="w-96">
-                            <span class="block rounded w-full bg-cover bg-no-repeat bg-center" 
-                                  :style="{ backgroundImage: `url(${baseUrl}/storage/${sauna.images_facility.main_image_url})`, paddingBottom: '100%' }"></span>
-                            <img :src="`${baseUrl}/storage/default-images/no_image.jpg`" 
-                                        :alt="sauna.facility_name" 
-                                        class="rounded w-full object-cover">
-                          </div>
-                          <div>
-                            マップ
-                          </div>
-                        </div>
-                        <div class="col-span-1">
-                          <div class="grid grid-cols-9 gap-6">
-                            <div class="col-span-2 font-bold">
-                              施設名
-                            </div>
-                            <div class="col-span-7">
-                              {{ sauna.facility_name }}
-                            </div>
-                            <div class="col-span-2 font-bold">
-                              施設タイプ
-                            </div>
-                            <div class="col-span-7">
-                              {{ sauna.facility_type.type_name }}
-                            </div>
-                            <div class="col-span-2 font-bold">
-                              住所
-                            </div>
-                            <div class="col-span-7">
-                              {{ sauna.prefecture.name }} {{ sauna.address1 }} {{ saunaAddress2 }} {{ saunaAddress3 }}
-                            </div>
-                            <div class="col-span-2 font-bold">
-                              アクセス
-                            </div>
-                            <div class="col-span-7">
-                              {{ sauna.access_text }}
-                            </div>
-                            <div class="col-span-2 font-bold">
-                              TEL
-                            </div>
-                            <div class="col-span-7">
-                              {{ sauna.tel }}
-                            </div>
-                            <div class="col-span-2 font-bold">
-                              HP
-                            </div>
-                            <div class="col-span-7">
-                              <a :href="sauna.website_url">{{ sauna.website_url }}</a>
-                            </div>
-                            <div class="col-span-2 font-bold">
-                              定休日
-                            </div>
-                            <div class="col-span-7">
-                              {{ businessHourIsClosed }}
-                            </div>
-                            <div class="col-span-2 font-bold">
-                              営業時間
-                            </div>
-                            <div class="col-span-7">
-                              <ul v-for="hour in formattedBusinessHours" :key="hour.id">
-                                <li> {{ hour.day_of_week }}曜日 ： {{ hour.opening_time }} ~ {{ hour.closing_time }}</li>
+                        <SectionBorder />
+
+                        <div class="grid grid-cols-2 gap-16 mb-12">
+                          <div id="saunaInfo" class="md:col-span-1 col-span-2 px-6 py-6 border-2 rounded-xl text-center">
+                            <div class="mb-2 text-xl font-bold text-red-500">サウナ室</div>
+                            <div class="mb-2">温度<span class="text-3xl text-red-500">{{ saunaTemperature }}</span><span class="text-red-500">度</span></div>
+                            <div class="mb-2">収容人数： {{ saunaCapacity }} 人</div>
+                            <div class="mb-4">
+                              <ul class="flex justify-center text-white">
+                                <li v-if="saunaType" class="bg-gray-400 px-2 py-1 font-bold border-2 rounded-2xl">{{ saunaType }}</li>
+                                <li v-if="stoveType" class="bg-gray-400 px-2 py-1 font-bold border-2 rounded-2xl">{{ stoveType }}</li>
+                                <li v-if="heatType" class="bg-gray-400 px-2 py-1 font-bold border-2 rounded-2xl">{{ heatType }}</li>
                               </ul>
                             </div>
-                            <div class="col-span-2 font-bold">
-                              料金
+                            <div>{{ saunaAdditionalInfo }}</div>
+                          </div>
+                          <div id="waterBath" class="md:col-span-1 col-span-2 px-6 py-6 border-2 rounded-xl text-center">
+                            <div class="mb-2 text-xl font-bold text-blue-500">水風呂情報</div>
+                            <div class="mb-2">温度<span class="text-3xl text-blue-500">{{ waterBathTemperature }}</span><span class="text-blue-500">度</span></div>
+                            <div class="mb-2">収容人数： {{ waterBathCapacity }} 人</div>
+                            <div class="mb-4">
+                              <ul class="flex justify-center text-white">
+                                <li v-if="waterType" class="bg-gray-400 px-2 py-1 font-bold border-2 rounded-2xl">{{ waterType }}</li>
+                                <li v-if="bathType" class="bg-gray-400 px-2 py-1 font-bold border-2 rounded-2xl">{{ bathType }}</li>
+                                <li v-if="waterDepth" class="bg-gray-400 px-2 py-1 font-bold border-2 rounded-2xl">{{ waterDepth }}</li>
+                              </ul>
                             </div>
-                            <div class="col-span-7">
-                              <div v-html="formattedFeeText"></div>
+                            <div>{{ waterBathAdditionalInfo }}</div>
+                          </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-6 mb-12">
+                          <div id="saunas" class="col-span-2">基本情報</div>
+                          <div class="col-span-2 md:col-span-1 mr-6">
+                            <div class="w-full md:w-96">
+                              <span class="block rounded w-full bg-cover bg-no-repeat bg-center mb-6" 
+                                    :style="{ backgroundImage: `url(${baseUrl}storage/${sauna.images_facility.main_image_url})`, paddingBottom: '100%' }"></span>
+                              <img :src="`${baseUrl}storage/default-images/no_image.jpg`" 
+                                          :alt="sauna.facility_name" 
+                                          class="rounded w-full object-cover">
+                            </div>
+                            <div>
+                              マップ
+                            </div>
+                          </div>
+                          <div class="col-span-2 md:col-span-1">
+                            <div class="grid grid-cols-9 gap-6">
+                              <div class="col-span-2 font-bold">
+                                施設名
+                              </div>
+                              <div class="col-span-7">
+                                {{ sauna.facility_name }}
+                              </div>
+                              <div class="col-span-9 border-t border-gray-200" />
+                              <div class="col-span-2 font-bold">
+                                施設タイプ
+                              </div>
+                              <div class="col-span-7">
+                                {{ sauna.facility_type.type_name }}
+                              </div>
+                              <div class="col-span-9 border-t border-gray-200" />
+                              <div class="col-span-2 font-bold">
+                                住所
+                              </div>
+                              <div class="col-span-7">
+                                {{ sauna.prefecture.name }} {{ sauna.address1 }} {{ saunaAddress2 }} {{ saunaAddress3 }}
+                              </div>
+                              <div class="col-span-9 border-t border-gray-200" />
+                              <div class="col-span-2 font-bold">
+                                アクセス
+                              </div>
+                              <div class="col-span-7">
+                                {{ sauna.access_text }}
+                              </div>
+                              <div class="col-span-9 border-t border-gray-200" />
+                              <div class="col-span-2 font-bold">
+                                TEL
+                              </div>
+                              <div class="col-span-7">
+                                {{ sauna.tel }}
+                              </div>
+                              <div class="col-span-9 border-t border-gray-200" />
+                              <div class="col-span-2 font-bold">
+                                HP
+                              </div>
+                              <div class="col-span-7 break-words">
+                                <a :href="sauna.website_url">{{ sauna.website_url }}</a>
+                              </div>
+                              <div class="col-span-9 border-t border-gray-200" />
+                              <div class="col-span-2 font-bold">
+                                定休日
+                              </div>
+                              <div class="col-span-7">
+                                {{ businessHourIsClosed }}
+                              </div>
+                              <div class="col-span-9 border-t border-gray-200" />
+                              <div class="col-span-2 font-bold">
+                                営業時間
+                              </div>
+                              <div class="col-span-7">
+                                <ul v-for="hour in formattedBusinessHours" :key="hour.id">
+                                  <li> {{ hour.day_of_week }}曜日 ： {{ hour.opening_time }} ~ {{ hour.closing_time }}</li>
+                                </ul>
+                              </div>
+                              <div class="col-span-9 border-t border-gray-200" />
+                              <div class="col-span-2 font-bold">
+                                料金
+                              </div>
+                              <div class="col-span-7">
+                                <div v-html="formattedFeeText"></div>
+                              </div>
                             </div>
                           </div>
                         </div>
-                      </div>
 
-                      <SectionBorder />
+                        <SectionBorder />
 
-                      <div class="grid grid-cols-6 gap-4 mb-12">
-                        <div class="col-span-6 mb-6">
-                          写真ギャラリー
-                        </div>
-                        <div v-for="image in images" class="sm:col-span-3 md:col-span-2 col-span-6">
-                          <div v-if="image.image_url">
-                            <p>{{ image.alt }}</p>
-                              <span class="block rounded w-full bg-cover bg-no-repeat bg-center"
-                                    :style="{ backgroundImage: `url(${baseUrl}/storage/${image.image_url})`, 
-                                    paddingBottom: '100%' }"></span>
-                            </div>
+                        <div class="grid grid-cols-6 gap-4 mb-12">
+                          <div class="col-span-6 mb-6">
+                            写真ギャラリー
                           </div>
+                          <div v-for="image in images" class="sm:col-span-3 md:col-span-2 col-span-6">
+                            <div v-if="image.image_url">
+                              <p>{{ image.alt }}</p>
+                                <span class="block rounded w-full bg-cover bg-no-repeat bg-center"
+                                      :style="{ backgroundImage: `url(${baseUrl}storage/${image.image_url})`, 
+                                      paddingBottom: '100%' }"></span>
+                              </div>
+                            </div>
+                        </div>
+                        <div class="w-32 bg-gray-700 text-white px-4 py-2 rounded-lg text-center">
+                          <button @click="goBack"
+                                  class="block w-full h-full">戻る</button>
+                        </div>
                       </div>
-                      <div>
-                        <button @click="goBack">戻る</button>
-                        <!-- ページネーション -->
-                        <!-- <nav>
-                          <ul class="flex justify-center space-x-6"> -->
-
-                            <!-- 1ページ前へ遷移 -->
-                            <!-- <li v-if="saunas.current_page > 1">
-                              <a @click.prevent="goToPreviousPage()"
-                                class="flex items-center justify-center w-12 h-12 bg-gray-200 hover:bg-gray-300 rounded-full"
-                                href="#">&lt;</a>
-                            </li> -->
-                            <!-- 1ページ次へ遷移 -->
-                            <!-- <li v-if="saunas.current_page < saunas.last_page">
-                              <a @click.prevent="goToNextPage()"
-                                class="flex items-center justify-center w-12 h-12 bg-gray-200 hover:bg-gray-300 rounded-full"
-                                href="#">&gt;</a>
-                            </li>
-                          </ul>
-                        </nav> -->
-                      </div>
-                    </div>
-
-
-                </div>
-            </div>
+                  </div>
+              </div>
+          </div>
         </div>
     </AppLayout>
 </template>

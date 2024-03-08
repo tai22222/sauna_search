@@ -74,4 +74,10 @@ class Sauna extends Model
       return $this->belongsTo(Prefecture::class, 'prefecture_id');
   }
   
+
+  // レビュー情報とのリレーション(1対多)
+  public function review()
+  {
+      return $this->hasMany(review::class);
+  }
 }

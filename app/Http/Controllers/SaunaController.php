@@ -161,7 +161,7 @@ class SaunaController extends Controller
         // ソートデータ
         'sort' => $sort,
         'order' => $order,
-      ]
+      ],
     ]);
     
   }
@@ -255,14 +255,16 @@ class SaunaController extends Controller
       DB::commit();
       // 成功した場合の処理
       logger('DBの挿入が成功しました');
-      return redirect('/saunas')->with('success', '登録が成功しました。');
+      return redirect('/saunas')->with('flash.successMessage', '登録が成功しました。');
 
     } catch (\Exception $e) {
         DB::rollBack();
         // エラーハンドリング
         logger('DBの挿入が失敗しました');
         logger($e->getMessage());
-        return back()->withInput()->with('error', '登録中にエラーが発生しました。');
+        return back()->withInput()->with('flash', [
+          'errorMessage' => '登録中にエラーが発生しました。'
+        ]);
     }
   }
 

@@ -46,7 +46,7 @@ defineExpose({ focus: () => input.value.focus() });
     <select 
       :id="props.id" 
       v-model="selectedValue"
-      class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm" 
+      class="mt-1 block w-full border-gray-300 border-2 focus:border-indigo-500 focus:ring-indigo-500 px-4 py-2 rounded-xl shadow-sm" 
       ref="selectBox" 
       @change="handleChange" 
     >

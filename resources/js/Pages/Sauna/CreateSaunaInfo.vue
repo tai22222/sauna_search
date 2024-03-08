@@ -18,6 +18,9 @@ const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute
 // axiosのデフォルトヘッダーにCSRFトークンを設定
 axios.defaults.headers.common['X-CSRF-TOKEN'] = csrfToken;
 
+// ベースURLの設定
+const baseUrl = import.meta.env.VITE_APP_BASE_URL; 
+
 // 親コンポーネント(Create.vue)からオブジェクト、配列の受け渡し(CompositionAPI、ObjectはArrayも含む)
 const props = defineProps({
     user: Object,
@@ -25,14 +28,12 @@ const props = defineProps({
     facilityType: Array,
     usageType: Array,
     prefecture: Array,
-    // saunaInfo: Object,
     saunaType: Array,
     stoveType: Array,
     heatType: Array,
-    // waterBath: Object,
     bathType: Array,
     waterType: Array,
-    // businessHour: Object,
+
 });
 
 // フォームの各入力項目に対応するPOSTデータ
@@ -169,12 +170,6 @@ const selectDay = (day) => {
   selectedDay.value = day;
 };
 
-// プレビュー表示のための画像
-// const photoPreview = ref(null);
-// 画像を選択した時の双方バインディングデータ
-// const photoInput = ref(null);
-
-
 // DB挿入画像の配列
 const imageInputs = ref([]);
 const imageUrls = ref([
@@ -210,7 +205,6 @@ onMounted(() => {
     // input要素をimageInputsに追加
     imageInputs.value.push(input);
   });
-
 });
 
 // 画像選択ボタンを押した時に、input要素を取得してクリック
@@ -232,28 +226,8 @@ const selectImage = (event, field, index) => {
     // プレビュー画像表示のためにimageUrlsのvalueを更新
     imageUrls.value[index].value = reader.result;
   };
-  console.log('form');
-    console.log(form);
-    console.log('imageUrls');
-    console.log(imageUrls);
-
   reader.readAsDataURL(file);
 };
-
-
-// const deletePhoto = () => {
-//     photoPreview.value = '';
-//     clearPhotoFileInput();
-//     console.log('画像クリア時');
-//     console.log(photoPreview);
-// };
-
-// プレビュー削除時にinputデータも削除
-// const clearPhotoFileInput = () => {
-//     if (photoInput.value?.value) {
-//         photoInput.value.value = null;
-//     }
-// };
 
 // 画像を削除するときに実行(for対応)
 const deleteImage = (field, index) => {
@@ -261,13 +235,11 @@ const deleteImage = (field, index) => {
     // プレビュー画像表示のためにimageUrlsのvalueを更新
     imageUrls.value[index].value = '';
 };
-
-console.log(props);
 </script>
 
 <template>
-    <div class="mb-16 px-4 py-5 bg-white sm:p-20 shadow">
-      <h2 class="text-2xl font-bold text-gray-900 text-center mb-10 ">施設を登録</h2>
+    <div class="mb-16 px-4 py-5 sm:px-20 sm:py-10 bg-sub shadow rounded-lg text-white">
+      <h2 class="text-2xl font-bold text-white text-center mb-10 ">サウナ施設の新規登録</h2>
       <p>会員登録されている方であれば、誰でも施設情報を登録・更新することができます。</p>
       <p>皆様のサウナライフをより良いものにしていただくために、より正確な情報をご提供いただけると幸いです。</p>
       <p>すでに施設情報が登録されており、重複登録となってしまった場合は運営側で削除させていただくこともございますので、</p>
@@ -277,7 +249,6 @@ console.log(props);
      <!-- 施設情報入力 -->
     <FormSection @submitted="updateSaunaInformation">
         <template #title>
-            【施設情報入力】
         </template>
 
         <template #description>
@@ -285,10 +256,10 @@ console.log(props);
         </template>
 
         <template #form>
-            <!-- 項目数 施設情報(12項目)　サウナ情報(6項目)　水風呂情報(6項目)　画像 -->
-            <h3 class="col-span-6 text-xl mb-4">・施設情報</h3>
-            <!-- Facility_name input -->
-            <div class="col-span-6 sm:col-span-4">
+            <!-- 項目数合計24個 施設情報(12項目)　サウナ情報(6項目)　水風呂情報(6項目)　画像 -->
+            <h3 class="col-span-6 text-xl font-bold">【施設情報】</h3>
+            <!-- 施設名 -->
+            <div class="col-span-6 sm:col-span-6">
                 <InputLabel for="facility_name" value="施設名 (※必須)" />
                 <TextInput
                     id="facility_name"
@@ -301,8 +272,8 @@ console.log(props);
                 <InputError :message="form.errors.facility_name" class="mt-2" />
             </div>
 
-            <!-- Saunas.Facility_types Facility_type select -->
-            <div class="col-span-6 sm:col-span-4">
+            <!-- 施設タイプ -->
+            <div class="col-span-6 sm:col-span-3">
                 <SelectBox 
                   id="facility_type" 
                   label="施設タイプ (※必須)" 
@@ -313,8 +284,8 @@ console.log(props);
                 />
             </div>
 
-            <!-- Saunas.Usage_types Usage_type select -->
-            <div class="col-span-6 sm:col-span-4">
+            <!-- 利用形態 -->
+            <div class="col-span-6 sm:col-span-3">
                 <SelectBox 
                   id="usage_type" 
                   label="利用形態 (※必須)" 
@@ -325,8 +296,8 @@ console.log(props);
                 />
             </div>
 
-            <!-- Saunas.Prefectures Prefecture select -->
-            <div class="col-span-3 sm:col-span-3">
+            <!-- 都道府県 -->
+            <div class="col-span-3 sm:col-span-2">
                 <SelectBox 
                   id="prefecture_id" 
                   label="都道府県 (※必須)" 
@@ -338,8 +309,8 @@ console.log(props);
                 />
             </div>
 
-            <!-- Saunas Address1 input -->
-            <div class="col-span-6 sm:col-span-4">
+            <!-- 住所1 -->
+            <div class="col-span-6">
                 <InputLabel for="address1" value="住所1 (※必須)" />
                 <TextInput
                     id="address1"
@@ -351,8 +322,8 @@ console.log(props);
                 />
                 <InputError :message="form.errors.address1" class="mt-2" />
             </div>
-            <!-- Saunas Address2 input -->
-            <div class="col-span-6 sm:col-span-4">
+            <!-- 住所2 -->
+            <div class="col-span-6">
                 <InputLabel for="address2" value="住所2" />
                 <TextInput
                     id="address2"
@@ -364,8 +335,8 @@ console.log(props);
                 />
                 <InputError :message="form.errors.address2" class="mt-2" />
             </div>
-            <!-- Saunas Address3 input -->
-            <div class="col-span-6 sm:col-span-4">
+            <!-- 住所3 -->
+            <div class="col-span-6">
                 <InputLabel for="address3" value="住所3" />
                 <TextInput
                     id="address3"
@@ -378,8 +349,8 @@ console.log(props);
                 <InputError :message="form.errors.address3" class="mt-2" />
             </div>
 
-            <!-- Saunas Access_text textarea -->
-            <div class="col-span-6 sm:col-span-4">
+            <!-- アクセス詳細 -->
+            <div class="col-span-6">
                 <InputLabel for="access_text" value="アクセス" />
                 <Textarea
                     id="access_text"
@@ -395,7 +366,7 @@ JR「大阪」駅、地下鉄・阪急・阪神「梅田」駅より東へ徒歩
                 <InputError :message="form.errors.access_text" class="mt-2" />
             </div>
 
-            <!-- Saunas tel input -->
+            <!-- 電話番号 -->
             <div class="col-span-6 sm:col-span-4">
                 <InputLabel for="tel" value="電話番号" />
                 <TextInput
@@ -409,7 +380,7 @@ JR「大阪」駅、地下鉄・阪急・阪神「梅田」駅より東へ徒歩
                 <InputError :message="form.errors.tel" class="mt-2" />
             </div>
 
-            <!-- Saunas Website_url input -->
+            <!-- WebURL -->
             <div class="col-span-6 sm:col-span-4">
                 <InputLabel for="website_url" value="Webサイト" />
                 <TextInput
@@ -423,19 +394,19 @@ JR「大阪」駅、地下鉄・阪急・阪神「梅田」駅より東へ徒歩
                 <InputError :message="form.errors.website_url" class="mt-2" />
             </div>
 
-            <!-- Business_hours.Saunas business_hours hours 曜日ごとに(for) -->
-            <div class="col-span-6 sm:col-span-4 pb-6 border rounded">
+            <!-- 営業時間 -->
+            <div class="col-span-6 pb-6 border-gray-300 border-2 rounded-xl">
               <div class="grid grid-cols-7">
                 <div v-for="(alfDay, day) in daysOfWeek" 
                   :key="day" 
                   @click="selectDay(alfDay)" 
                   class="inline-block p-4 mb-6 text-center text-gray-600 font-bold border border-gray-400 border rounded"
-                  :class="[selectedDay === alfDay ? 'bg-blue-300' : 'bg-gray-200']">
+                  :class="[selectedDay === alfDay ? ['bg-gray-500', 'text-white'] : 'bg-gray-200']">
                   {{ day }}
                 </div>
               </div>
 
-              <div class="md:grid md:grid-cols-6 md:gap-6 ml-8">
+              <div class="grid grid-cols-6 gap-6 ml-8">
                 <!-- 曜日ごとのビジネスアワーの入力フィールドを表示 -->
                 <div class="col-span-6"
                      v-for="(alfDay, day) in daysOfWeek" 
@@ -446,70 +417,100 @@ JR「大阪」駅、地下鉄・阪急・阪神「梅田」駅より東へ徒歩
                     <input 
                       type="checkbox"
                       v-model="form['is_closed_' + alfDay]"
-                      class="m-4 form-checkbox h-8 w-8 text-gray-600 rounded border-none focus:ring-0 shadow-none checked:bg-gray-600 bg-gray-200"
+                      class="m-4 form-checkbox h-8 w-8 text-gray-600 rounded-lg border-none focus:ring-0 shadow-none checked:bg-gray-600 bg-gray-200"
                     >
                     <label class="inline-block text-center text-l">定休日</label>
                   </div>
 
-                  <div class="grid grid-cols-6 md:gap-6">
-                    <div class="col-span-2">
-                      <!-- 開始時間の入力フィールド -->
-                      <InputLabel for="'opening_time_' + alfDay" value="営業開始時間" />
-                        <TextInput
-                            id="'opening_time_' + alfDay"
-                            v-model="form['opening_time_' + alfDay]"
-                            type="time"
-                            class="mt-1 block w-full"
-                            placeholder="例： 12:00"
-                        />
-                    </div>
-                    <span class="flex justify-center items-center h-full">〜</span>
-                    <div class="col-span-2">
-                      <!-- 終了時間の入力フィールド -->
-                      <InputLabel for="'closing_time_' + alfDay" value="営業終了時間" />
-                        <TextInput
-                            id="'closing_time_' + alfDay"
-                            v-model="form['closing_time_' + alfDay]"
-                            type="time"
-                            class="mt-1 block w-full"
-                            placeholder="例： 12:00"
-                        />
+                  <div v-if="!form['is_closed_' + alfDay]">
+                    <div class="grid grid-cols-6 md:gap-6">
+                      <div class="col-span-2">
+                        <!-- 開始時間の入力フィールド -->
+                        <InputLabel for="'opening_time_' + alfDay" value="営業開始時間" />
+                          <TextInput
+                              id="'opening_time_' + alfDay"
+                              v-model="form['opening_time_' + alfDay]"
+                              type="time"
+                              class="mt-1 block w-full"
+                              placeholder="例： 12:00"
+                          />
+                      </div>
+                      <span class="flex justify-center pt-4 items-center h-full">〜</span>
+                      <div class="col-span-2">
+                        <!-- 終了時間の入力フィールド -->
+                        <InputLabel for="'closing_time_' + alfDay" value="営業終了時間" />
+                          <TextInput
+                              id="'closing_time_' + alfDay"
+                              v-model="form['closing_time_' + alfDay]"
+                              type="time"
+                              class="mt-1 block w-full"
+                              placeholder="例： 12:00"
+                          />
+                      </div>
                     </div>
                   </div>
+                  <div v-else>
+                    <div class="hidden">
+                        <!-- 開始時間の入力フィールド -->
+                        <InputLabel for="'opening_time_' + alfDay" value="営業開始時間" />
+                          <TextInput
+                              id="'opening_time_' + alfDay"
+                              value=""
+                              type="time"
+                              class="mt-1 block w-full"
+                              placeholder="例： 12:00"
+                          />
+                      </div>
+                      <div class="hidden">
+                        <!-- 終了時間の入力フィールド -->
+                        <InputLabel for="'closing_time_' + alfDay" value="営業終了時間" />
+                          <TextInput
+                              id="'closing_time_' + alfDay"
+                              value=""
+                              type="time"
+                              class="mt-1 block w-full"
+                              placeholder="例： 12:00"
+                          />
+                      </div>
+                  </div>
+
                 </div>
               </div>
             </div>
 
-            <!-- Saunas business_hours_detail textarea -->
-            <div class="col-span-6 sm:col-span-4">
+            <!-- 営業時間詳細 -->
+            <div class="col-span-6">
                 <InputLabel for="business_hours_detail" value="営業時間詳細" />
                 <Textarea
                     id="business_hours_detail"
                     v-model="form.business_hours_detail"
                     type="text"
-                    class="mt-1 block w-full min-h-32"
+                    class="mt-1 block w-full min-h-48"
                     autocomplete="business_hours_detail"
                     placeholder="例： 毎日営業しているが、午前10時から午後12時までは清掃のため入浴不可"
                 />
                 <InputError :message="form.errors.business_hours_detail" class="mt-2" />
             </div>
 
-            <!-- Saunas min_fee input -->
-            <div class="col-span-6 sm:col-span-4">
+            <!-- 最低料金 todo 数字のみの入力で自動で円入力 -->
+            <div class="col-span-3 sm:col-span-2">
                 <InputLabel for="min_fee" value="最低料金" />
-                <TextInput
+                <div class="relative">
+                  <TextInput
                     id="min_fee"
                     v-model="form.min_fee"
                     type="text"
                     class="mt-1 block w-full"
                     autocomplete="min_fee"
                     placeholder="例： 300"
-                />
+                  />
+                  <span class="absolute inset-y-0 right-4 pr-3 flex items-center">円</span>
+                </div>
                 <InputError :message="form.errors.min_fee" class="mt-2" />
             </div>
             
-            <!-- Saunas fee_text textarea -->
-            <div class="col-span-6 sm:col-span-4">
+            <!-- 料金詳細 -->
+            <div class="col-span-6">
                 <InputLabel for="fee_text" value="料金詳細" />
                 <Textarea
                     id="fee_text"
@@ -530,12 +531,12 @@ JR「大阪」駅、地下鉄・阪急・阪神「梅田」駅より東へ徒歩
 
 
             <div class="col-span-6 py-8">
-              <div class="border-t border-gray-200" /> 
+              <div class="border-t border-gray-400" /> 
             </div>
-            <h3 class="col-span-6 text-xl mb-4">・サウナ情報</h3>
-            
-            <!-- Sauna_infos.Saunas Sauna_type select -->
-            <div class="col-span-6 sm:col-span-4">
+            <h3 class="col-span-6 text-xl font-bold">【サウナ情報】</h3>
+            <!-- todo サウナ室が追加できるような仕様 -->
+            <!-- サウナタイプ -->
+            <div class="col-span-6 sm:col-span-2">
                 <SelectBox 
                   id="sauna_type_id" 
                   label="サウナタイプ" 
@@ -546,11 +547,10 @@ JR「大阪」駅、地下鉄・阪急・阪神「梅田」駅より東へ徒歩
                 />
             </div>
 
-            <!-- Sauna_infos.Saunas Stove_type radio -->
-            <div class="col-span-6 sm:col-span-4">
+            <!--  ストーブタイプ -->
+            <div class="col-span-6">
               <InputLabel for="stove_type_id" value="ストーブ" />
               <div class="mt-1">
-
                 <label v-for="(option, index) in stoveTypeName" :key="index" class="inline-flex items-center ml-2">
                 <input
                   type="radio"
@@ -565,11 +565,10 @@ JR「大阪」駅、地下鉄・阪急・阪神「梅田」駅より東へ徒歩
             <InputError :message="form.errors.stove_id" class="mt-2" />
             </div>
 
-            <!-- Sauna_infos.Saunas heat_type radio -->
+            <!-- 熱源 -->
             <div class="col-span-6">
               <InputLabel for="heat_type_id" value="熱源" />
               <div class="mt-1">
-
                 <label v-for="(option, index) in heatTypeName" :key="index" class="inline-flex items-center ml-2">
                 <input
                   type="radio"
@@ -584,9 +583,9 @@ JR「大阪」駅、地下鉄・阪急・阪神「梅田」駅より東へ徒歩
             <InputError :message="form.errors.heat_type_id" class="mt-2" />
             </div>
 
-            <!-- Sauna_infos.Saunas temperature input -->
+            <!-- 温度 -->
             <div class="col-span-6">
-              <div class="grid grid-cols-6 gap-6">
+              <div class="grid grid-cols-6">
                 <div class="col-span-3 md:col-span-2">
                   <InputLabel for="temperature" value="温度" />
                   <div class="relative">
@@ -605,9 +604,9 @@ JR「大阪」駅、地下鉄・阪急・阪神「梅田」駅より東へ徒歩
               </div>
             </div>
 
-            <!-- Sauna_infos.Saunas capacity input -->
+            <!-- 収容人数 -->
             <div class="col-span-6">
-              <div class="grid grid-cols-6 gap-6">
+              <div class="grid grid-cols-6">
                 <div class="col-span-3 md:col-span-2">
                   <InputLabel for="capacity" value="収容人数" />
                   <div class="relative">
@@ -625,8 +624,9 @@ JR「大阪」駅、地下鉄・阪急・阪神「梅田」駅より東へ徒歩
                 </div>
               </div>
             </div>
-            <!-- Sauna_infos.Saunas additional_info textarea -->
-            <div class="col-span-6 sm:col-span-4">
+
+            <!-- サウナ詳細 -->
+            <div class="col-span-6">
                 <InputLabel for="additional_info" value="補足" />
                 <Textarea
                     id="additional_info"
@@ -641,12 +641,12 @@ JR「大阪」駅、地下鉄・阪急・阪神「梅田」駅より東へ徒歩
 
 
             <div class="col-span-6 py-8">
-              <div class="border-t border-gray-200" /> 
+              <div class="border-t border-gray-400" /> 
             </div>
-            <h3 class="col-span-6 text-xl mb-4">・水風呂情報</h3>
-
-            <!-- Water_baths.Saunas bath_type select -->
-            <div class="col-span-6 sm:col-span-4">
+            <h3 class="col-span-6 text-xl font-bold">【水風呂情報】</h3>
+            <!-- todo 水風呂が追加できるような仕様 -->
+            <!-- 水風呂タイプ -->
+            <div class="col-span-6 sm:col-span-3">
                 <SelectBox 
                   id="bath_type_id" 
                   label="タイプ" 
@@ -657,8 +657,8 @@ JR「大阪」駅、地下鉄・阪急・阪神「梅田」駅より東へ徒歩
                 />
             </div>
 
-            <!-- Water_baths.Saunas water_type select -->
-            <div class="col-span-6 sm:col-span-4">
+            <!-- 水の種類 -->
+            <div class="col-span-6 sm:col-span-3">
                 <SelectBox 
                   id="water_type_id" 
                   label="水" 
@@ -669,9 +669,9 @@ JR「大阪」駅、地下鉄・阪急・阪神「梅田」駅より東へ徒歩
                 />
             </div>
 
-            <!-- Water_baths.Saunas temperature input -->
+            <!-- 水風呂温度 -->
             <div class="col-span-6">
-              <div class="grid grid-cols-6 gap-6">
+              <div class="grid grid-cols-6">
                 <div class="col-span-3 md:col-span-2">
                   <InputLabel for="temperature" value="温度" />
                   <div class="relative">
@@ -690,9 +690,9 @@ JR「大阪」駅、地下鉄・阪急・阪神「梅田」駅より東へ徒歩
               </div>
             </div>
 
-            <!-- Water_baths.Saunas capacity input -->
+            <!-- 水風呂収容人数 -->
             <div class="col-span-6">
-              <div class="grid grid-cols-6 gap-6">
+              <div class="grid grid-cols-6">
                 <div class="col-span-3 md:col-span-2">
                   <InputLabel for="capacity" value="収容人数" />
                   <div class="relative">
@@ -711,8 +711,8 @@ JR「大阪」駅、地下鉄・阪急・阪神「梅田」駅より東へ徒歩
               </div>
             </div>
 
-            <!-- Water_baths.Saunas deep_water input -->
-            <div class="col-span-6 sm:col-span-4">
+            <!-- 水深 -->
+            <div class="col-span-6 sm:col-span-3">
                 <SelectBox 
                   id="deep_water" 
                   label="水深"
@@ -723,8 +723,8 @@ JR「大阪」駅、地下鉄・阪急・阪神「梅田」駅より東へ徒歩
                 />
             </div>
 
-            <!-- Water_baths.Saunas additional_info textarea -->
-            <div class="col-span-6 sm:col-span-4">
+            <!-- 水風呂補足 -->
+            <div class="col-span-6">
                 <InputLabel for="additional_info" value="補足" />
                 <Textarea
                     id="additional_info"
@@ -740,34 +740,35 @@ JR「大阪」駅、地下鉄・阪急・阪神「梅田」駅より東へ徒歩
 
 
             <div class="col-span-6 py-8">
-              <div class="border-t border-gray-200" /> 
+              <div class="border-t border-gray-400" /> 
             </div>
-            <h3 class="col-span-6 text-xl mb-4">・画像登録</h3>
+            <h3 class="col-span-6 text-xl">【画像登録】</h3>
+            <span class="col-span-4">※1枚目のメイン画像(外観)は必須</span>
+            <!-- todo 画像サイズの制限 -->
           <!-- 画像アップロード 6枚(main1枚と1~5のimage) -->
           <div class="col-span-6">
                 <!-- 施設メイン画像のinput -->
-                <div class="grid grid-cols-6 gap-6">
-
-                    <div v-for="(image, index) in imageUrls" key="index" class="col-span-6 md:col-span-2 sm:col-span-3">
+                <div class="grid grid-cols-6 gap-8">
+                  <!-- todo 各画像のキャプションを追加 -->
+                    <div v-for="(image, index) in imageUrls" key="index" class="col-span-3 md:col-span-2 sm:col-span-3">
                       <input
                         :ref="`imageInputs${index}`"
                         type="file"
                         class="hidden"
                         @change="selectImage($event, image.key, index)"
                       >
-
-                      <InputLabel :for="`imageInput${image.key}`" value="サウナ画像" />
+                      <InputLabel :for="`imageInput${image.key}`" value="関連画像" />
 
                       <!-- 初期施設写真 -->
-                      <div v-show="! image.value" class="mt-2 w-full">
+                      <div v-show="! image.value" class="mt-2 w-full" @click="selectNewPhoto(index)">
                           <img 
-                            :src="'../storage/default-images/no_image.jpg'"
+                            :src="`${baseUrl}storage/default-images/no_image.jpg`"
                             :alt="sauna.facility_name"
                             class="rounded w-full object-cover">
                       </div>
 
                       <!-- 挿入画像のプレビュー -->
-                      <div v-show="image.value" class="mt-2">
+                      <div v-show="image.value" class="mt-2" @click="selectNewPhoto(index)">
                           <span
                               class="block rounded w-full bg-cover bg-no-repeat bg-center"
                               :style="{ backgroundImage: `url(${image.value})`,
@@ -788,24 +789,20 @@ JR「大阪」駅、地下鉄・阪急・阪神「梅田」駅より東へ徒歩
                       >
                           削除
                       </SecondaryButton>
-
                       <InputError :message="form.errors.photo" class="mt-2" />
                     </div>
                 </div>
- 
             </div>
-
-
         </template>
 
         <!-- 保存ボタン -->
         <template #actions>
             <ActionMessage :on="form.recentlySuccessful" class="mr-3">
-                Saved.
+                登録完了
             </ActionMessage>
 
-            <PrimaryButton :class="{ 'opacity-25': form.processing }" :disabled="form.processing">
-                Save
+            <PrimaryButton :class="{ 'opacity-25': form.processing }" class="bg-sub" :disabled="form.processing">
+                登録する
             </PrimaryButton>
         </template>
     </FormSection>

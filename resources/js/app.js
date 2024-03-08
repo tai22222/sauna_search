@@ -1,4 +1,3 @@
-console.log('app.jsが読み込まれました');
 import './bootstrap';
 import '../css/app.css';
 
@@ -13,7 +12,6 @@ const appName = window.document.getElementsByTagName('title')[0]?.innerText || '
 createInertiaApp({
     title: (title) => `${title} - ${appName}`,
     resolve: (name) => {
-      console.log(`resolve component: ${name}`);
       // resolvePageComponentの結果をreturnする必要があります。
       return resolvePageComponent(`./Pages/${name}.vue`, import.meta.glob('./Pages/**/*.vue'));
     },

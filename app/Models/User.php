@@ -75,4 +75,10 @@ class User extends Authenticatable
         // users テーブルの gender_id カラムを参照して、genders テーブルの id カラムと関連づける
         return $this->belongsTo(Gender::class);
     }
+
+    // レビュー情報とのリレーション(1対多)
+    public function review()
+    {
+        return $this->hasMany(review::class);
+    }
 }

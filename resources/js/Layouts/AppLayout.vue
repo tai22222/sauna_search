@@ -3,7 +3,7 @@
 import { ref, onMounted } from 'vue';
 
 // vendorからコンポーネントの読み込み
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
 
 // コンポーネントの読み込み
 import ApplicationMark from '@/Components/ApplicationMark.vue';
@@ -13,9 +13,13 @@ import DropdownLink from '@/Components/DropdownLink.vue';
 import NavLink from '@/Components/NavLink.vue';
 import ResponsiveNavLink from '@/Components/ResponsiveNavLink.vue';
 
-defineProps({
+// propsの定義
+const props = defineProps({
     title: String,
 });
+
+// ページ上に関する情報の取得
+const { flash } = usePage().props;
 
 const showingNavigationDropdown = ref(false);
 
@@ -27,34 +31,44 @@ const switchToTeam = (team) => {
     });
 };
 
-// // フラッシュメッセージに関する定義
-// const successMessage = ref('');
-// const errorMessage = ref('');
+// フラッシュメッセージに関する定義
+const successMessage = ref('');
+const errorMessage = ref('');
 
-// // フラッシュメッセージをセットアップする関数
-// const setupFlashMessages = () => {
-//   // 成功メッセージの取得
-//   const successMsg = "{{ session('success') }}";
-//   if (successMsg) {
-//     successMessage.value = successMsg;
-//   }
+// フラッシュメッセージをセットアップする関数
+const setupFlashMessages = () => {
+  // 成功メッセージの取得
+  const successMsg = flash.successMessage;
+  if (successMsg) {
+    successMessage.value = successMsg;
+    setTimeout(() => {
+      successMessage.value = '';
+    }, 3000);
+  }
   
-//   // エラーメッセージの取得
-//   const errorMsg = "{{ session('error') }}";
-//   if (errorMsg) {
-//     errorMessage.value = errorMsg;
-//   }
-// };
+  // エラーメッセージの取得
+  const errorMsg = flash.errorMessage;
+  if (errorMsg) {
+    errorMessage.value = errorMsg;
+    setTimeout(() => {
+      errorMessage.value = '';
+    }, 3000);
+  }
+};
 
-// // コンポーネントがマウントされた時にフラッシュメッセージをセットアップする
-// onMounted(() => {
-//   setupFlashMessages();
-// });
+// コンポーネントがマウントされた時にフラッシュメッセージをセットアップする
+onMounted(() => {
+  if (flash && (flash.success || flash.error)) {
+    setupFlashMessages();
+  }
+});
 
 // ログアウトに関する定義
 const logout = () => {
     router.post(route('logout'));
 };
+
+// アカウント削除に関する定義
 
 </script>
 
@@ -64,8 +78,8 @@ const logout = () => {
 
         <Banner />
 
-        <div class="min-h-screen bg-gray-100">
-          <nav class="bg-white border-b border-gray-100">
+        <div class="min-h-screen">
+          <nav class="bg-main border-b border-gray-100">
 
                 <!-- Primary Navigation Menu -->
                 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -73,25 +87,20 @@ const logout = () => {
                         <div class="flex">
                             <!-- Logo -->
                             <div class="shrink-0 flex items-center">
-                                <Link :href="route('dashboard')">
+                                <Link :href="route('sauna.index')">
                                     <ApplicationMark class="block h-9 w-auto" />
                                 </Link>
                             </div>
 
                             <!-- Navigation Links -->
                             <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
-                                <NavLink :href="route('dashboard')" :active="route().current('dashboard')">
+                                <NavLink :href="route('sauna.index')" :active="route().current('sauna.index')">
                                     TOP
                                 </NavLink>
                             </div>
                             <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
-                                <NavLink :href="route('sauna.index')" :active="route().current('sauna.index')">
-                                    サウナ一覧
-                                </NavLink>
-                            </div>
-                            <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
                                 <NavLink :href="route('sauna.create')" :active="route().current('sauna.create')">
-                                    サウナ新規追加
+                                    Newサウナの追加
                                 </NavLink>
                             </div>
                         </div>
@@ -159,13 +168,16 @@ const logout = () => {
                             <div class="ml-3 relative">
                                 <Dropdown align="right" width="48">
                                     <template #trigger>
-                                        <button v-if="$page.props.jetstream.managesProfilePhotos" class="flex text-sm border-2 border-transparent rounded-full focus:outline-none focus:border-gray-300 transition">
-                                            <img class="h-8 w-8 rounded-full object-cover" :src="$page.props.auth.user.profile_photo_url" :alt="$page.props.auth.user.name">
+                                        <button v-if="$page.props.jetstream.managesProfilePhotos" 
+                                                class="flex text-sm border-2 border-transparent rounded-full focus:outline-none focus:border-gray-300 transition">
+                                            <img class="h-8 w-8 rounded-full object-cover" 
+                                                 :src="$page.props.auth.user.profile_photo_url" 
+                                                 :alt="$page.props.auth.user.name">
                                         </button>
 
                                         <span v-else class="inline-flex rounded-md">
-                                            <button type="button" class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 bg-white hover:text-gray-700 focus:outline-none focus:bg-gray-50 active:bg-gray-50 transition ease-in-out duration-150">
-                                                {{ $page.props.auth.user.name }}
+                                            <button type="button" 
+                                                    class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 bg-white hover:text-gray-700 focus:outline-none focus:bg-gray-50 active:bg-gray-50 transition ease-in-out duration-150">
 
                                                 <svg class="ml-2 -mr-0.5 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                                                     <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
@@ -177,15 +189,17 @@ const logout = () => {
                                     <template #content>
                                         <!-- Account Management -->
                                         <div class="block px-4 py-2 text-xs text-gray-400">
-                                            Manage Account
+                                            アカウント設定
                                         </div>
 
                                         <DropdownLink :href="route('profile.show')">
-                                            Profile
+                                            マイページ
                                         </DropdownLink>
-
-                                        <DropdownLink v-if="$page.props.jetstream.hasApiFeatures" :href="route('api-tokens.index')">
-                                            API Tokens
+                                        <DropdownLink :href="route('profile.show')">
+                                            プロフィール
+                                        </DropdownLink>
+                                        <DropdownLink :href="route('profile.show')">
+                                            パスワード変更
                                         </DropdownLink>
 
                                         <div class="border-t border-gray-200" />
@@ -193,9 +207,12 @@ const logout = () => {
                                         <!-- Authentication -->
                                         <form @submit.prevent="logout">
                                             <DropdownLink as="button">
-                                                Log Out
+                                                ログアウト
                                             </DropdownLink>
                                         </form>
+                                        <DropdownLink :href="route('profile.show')" class="bg-red-200" classOverride="hover:bg-red-400">
+                                            アカウント削除
+                                        </DropdownLink>
                                     </template>
                                 </Dropdown>
                             </div>
@@ -233,18 +250,13 @@ const logout = () => {
                 <!-- Responsive Navigation Menu -->
                 <div :class="{'block': showingNavigationDropdown, 'hidden': ! showingNavigationDropdown}" class="sm:hidden">
                     <div class="pt-2 pb-3 space-y-1">
-                        <ResponsiveNavLink :href="route('dashboard')" :active="route().current('dashboard')">
-                            Dashboard
-                        </ResponsiveNavLink>
-                    </div>
-                    <div class="pt-2 pb-3 space-y-1">
                         <ResponsiveNavLink :href="route('sauna.index')" :active="route().current('sauna.index')">
-                            サウナ一覧
+                            TOP
                         </ResponsiveNavLink>
                     </div>
                     <div class="pt-2 pb-3 space-y-1">
                         <ResponsiveNavLink :href="route('sauna.create')" :active="route().current('sauna.create')">
-                            サウナ新規追加
+                            Newサウナの追加
                         </ResponsiveNavLink>
                     </div>
 
@@ -267,22 +279,24 @@ const logout = () => {
 
                         <div class="mt-3 space-y-1">
                             <ResponsiveNavLink :href="route('profile.show')" :active="route().current('profile.show')">
-                                Profile
+                                マイページ
                             </ResponsiveNavLink>
                             <ResponsiveNavLink :href="route('profile.show')" :active="route().current('profile.show')">
-                                MyPage
+                                プロフィール
                             </ResponsiveNavLink>
-
-                            <ResponsiveNavLink v-if="$page.props.jetstream.hasApiFeatures" :href="route('api-tokens.index')" :active="route().current('api-tokens.index')">
-                                API Tokens
+                            <ResponsiveNavLink :href="route('profile.show')" :active="route().current('profile.show')">
+                                パスワード変更
                             </ResponsiveNavLink>
 
                             <!-- Authentication -->
                             <form method="POST" @submit.prevent="logout">
                                 <ResponsiveNavLink as="button">
-                                    Log Out
+                                    ログアウト
                                 </ResponsiveNavLink>
                             </form>
+                            <ResponsiveNavLink :href="route('profile.show')" :active="route().current('profile.show')">
+                                アカウント削除
+                            </ResponsiveNavLink>
 
                             <!-- Team Management -->
                             <template v-if="$page.props.jetstream.hasTeamFeatures">
@@ -333,18 +347,20 @@ const logout = () => {
                     <slot name="header" />
                 </div>
             </header>
-
             <!-- フラッシュメッセージの表示 -->
-            <!-- <div v-if="successMessage" class="alert alert-success" role="alert">
+            <transition name="fade">
+              <div v-if="successMessage" class="text-center bg-green-500/70 text-white font-bold p-4 rounded mb-4" role="alert">
               {{ successMessage }}
             </div>
-            <div v-if="errorMessage" class="alert alert-danger" role="alert">
+            </transition>
+            <transition name="fade">
+              <div v-if="errorMessage" class="text-center bg-red-500/70 text-white font-bold p-4 rounded mb-4" role="alert">
               {{ errorMessage }}
-            </div> -->
-            
+            </div>
+          </transition>
 
             <!-- Page Content -->
-            <main>
+            <main class="bg-gray-200 text-gray-700">
                 <slot />
             </main>
         </div>

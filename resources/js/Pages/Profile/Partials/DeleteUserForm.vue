@@ -38,23 +38,17 @@ const closeModal = () => {
 </script>
 
 <template>
-    <ActionSection>
-        <template #title>
-            Delete Account
-        </template>
+    <div class="md:grid md:grid-cols-3 md:gap-6">
 
-        <template #description>
-            Permanently delete your account.
-        </template>
-
-        <template #content>
-            <div class="max-w-xl text-sm text-gray-600">
-                Once your account is deleted, all of its resources and data will be permanently deleted. Before deleting your account, please download any data or information that you wish to retain.
+        <div class="mt-5 md:mt-0 md:col-span-3">
+            <div class="px-4 py-5 sm:p-6 bg-white shadow sm:rounded-lg">
+              <div class="mt-5">
+              <h3>【アカウントを削除】</h3>
+              <div class="max-w-4xl text-sm text-gray-600 my-4">
+              アカウントが削除されると、そのすべてのリソースとデータは永久に削除されます。アカウントを削除する前に、保存しておきたいデータや情報があれば、ダウンロードしてください。
             </div>
-
-            <div class="mt-5">
                 <DangerButton @click="confirmUserDeletion">
-                    Delete Account
+                    アカウントを削除
                 </DangerButton>
             </div>
 
@@ -65,7 +59,7 @@ const closeModal = () => {
                 </template>
 
                 <template #content>
-                    Are you sure you want to delete your account? Once your account is deleted, all of its resources and data will be permanently deleted. Please enter your password to confirm you would like to permanently delete your account.
+                  本当にアカウントを削除してもよろしいですか？アカウントが削除されると、そのすべてのリソースとデータは永久に削除されます。アカウントを永久に削除することを確認するために、パスワードを入力してください。
 
                     <div class="mt-4">
                         <TextInput
@@ -93,10 +87,12 @@ const closeModal = () => {
                         :disabled="form.processing"
                         @click="deleteUser"
                     >
-                        Delete Account
+                        アカウント削除
                     </DangerButton>
                 </template>
             </DialogModal>
-        </template>
-    </ActionSection>
+            </div>
+        </div>
+  </div>
+
 </template>

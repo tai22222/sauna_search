@@ -39,20 +39,20 @@ const genderOptions = ref([
     { value: 2, label: '女性' },
 ]);
 
-// 西暦の定義
+// 西暦の定義（オブジェクト形式）
 const years = ref([]);
-// 年の選択肢を生成 (1900年から現在の年まで)
+let yearId = 1; // 年のIDを1から始める
 for (let year = new Date().getFullYear(); year >= 1900; year--) {
-  years.value.push(year);
+  years.value.push({ id: yearId++, value: year });
 }
 
 // 月の定義(1~12月)
-const months = ref([...Array(12).keys()].map(month => month + 1));
+const months = ref([...Array(12).keys()].map((month, index) => ({ id: index + 2, value: month + 1 })));
 
 // 日の定義(1~31日)
 const daysInMonth = computed(() => {
   if (form.birth_month) {
-    const days = new Array(31).fill().map((_, index) => index + 1);
+    const days = new Array(31).fill().map((_, index) => ({ id: index + 2, value: index + 1 }));
     return days;
   }
   return [];
@@ -78,6 +78,7 @@ const verificationLinkSent = ref(null);
 const photoPreview = ref(null);
 const photoInput = ref(null);
 
+// フォーム送信時の画像データをformに詰めて、formをpostする
 const updateProfileInformation = () => {
     if (photoInput.value) {
         form.photo = photoInput.value.files[0];
@@ -108,13 +109,9 @@ const updatePhotoPreview = () => {
 
     reader.onload = (e) => {
         photoPreview.value = e.target.result;
-        console.log(e.target);
     };
 
     reader.readAsDataURL(photo);
-    console.log(photoInput);
-        console.log(photoInput.value);
-        console.log(photoInput.value.files);
 };
 
 const deletePhoto = () => {
@@ -132,7 +129,6 @@ const clearPhotoFileInput = () => {
         photoInput.value.value = null;
     }
 };
-console.log(props);
 </script>
 
 <template>
@@ -148,7 +144,7 @@ console.log(props);
         <template #form>
           <!-- {{ user }} -->
             <!-- プロフィール写真 -->
-            <div v-if="$page.props.jetstream.managesProfilePhotos" class="col-span-6 sm:col-span-4">
+            <div v-if="$page.props.jetstream.managesProfilePhotos" class="col-span-6">
                 <!-- プロフィール写真のinput -->
                 <input
                     ref="photoInput"
@@ -190,9 +186,9 @@ console.log(props);
                 <InputError :message="form.errors.photo" class="mt-2" />
             </div>
 
-            <!-- Name input -->
-            <div class="col-span-6 sm:col-span-4">
-                <InputLabel for="name" value="Name" />
+            <!-- 名前 -->
+            <div class="col-span-6 sm:col-span-2">
+                <InputLabel for="name" value="ユーザー名" />
                 <TextInput
                     id="name"
                     v-model="form.name"
@@ -203,9 +199,9 @@ console.log(props);
                 <InputError :message="form.errors.name" class="mt-2" />
             </div>
 
-            <!-- Email input-->
-            <div class="col-span-6 sm:col-span-4">
-                <InputLabel for="email" value="Email" />
+            <!-- Email-->
+            <div class="col-span-6 sm:col-span-2">
+                <InputLabel for="email" value="メールアドレス" />
                 <TextInput
                     id="email"
                     v-model="form.email"
@@ -215,6 +211,8 @@ console.log(props);
                 />
                 <InputError :message="form.errors.email" class="mt-2" />
 
+                <!-- メール認証機能 -->
+                <!-- todo 追加できるように -->
                 <div v-if="$page.props.jetstream.hasEmailVerification && user.email_verified_at === null">
                     <p class="text-sm mt-2">
                         Your email address is unverified.
@@ -237,7 +235,7 @@ console.log(props);
             </div>
 
             <!-- gender_id -->
-            <div class="col-span-6 sm:col-span-4">
+            <div class="col-span-6">
               <InputLabel for="gender_id" value="性別" />
               <div class="mt-1">
                 <label v-for="(option, index) in genderOptions" :key="index" class="inline-flex items-center ml-2">
@@ -255,7 +253,7 @@ console.log(props);
             </div>
 
             <!-- Birth Year, Month, Day -->
-            <div class="ccol-span-6 sm:col-span-6">
+            <div class="col-span-6 sm:col-span-6">
               <div class="mb-2">
                 <p class="text-sm font-medium text-gray-700">生年月日</p>
               </div>
@@ -263,6 +261,7 @@ console.log(props);
                 <SelectBox 
                   id="birth_year" 
                   label="年" 
+                  column="value"
                   :initialValue="form.birth_year.toString()" 
                   :options="years" 
                   :error="form.errors.birth_year" 
@@ -271,6 +270,7 @@ console.log(props);
                 <SelectBox 
                   id="birth_month" 
                   label="月" 
+                  column="value"
                   :initialValue="form.birth_month.toString()" 
                   :options="months" 
                   :error="form.errors.birth_month" 
@@ -279,6 +279,7 @@ console.log(props);
                 <SelectBox 
                   id="birth_day" 
                   label="日" 
+                  column="value"
                   :initialValue="form.birth_day.toString()" 
                   :options="daysInMonth" 
                   :error="form.errors.birth_day" 
@@ -296,6 +297,7 @@ console.log(props);
                 <SelectBox 
                   id="debut_year" 
                   label="年" 
+                  column="value"
                   :initialValue="form.debut_year.toString()" 
                   :options="years" 
                   :error="form.errors.debut_year" 
@@ -305,6 +307,7 @@ console.log(props);
                 <SelectBox 
                   id="debut_month" 
                   label="月" 
+                  column="value"
                   :initialValue="form.debut_month.toString()" 
                   :options="months" 
                   :error="form.errors.debut_month" 
@@ -343,11 +346,11 @@ console.log(props);
 
         <template #actions>
             <ActionMessage :on="form.recentlySuccessful" class="mr-3">
-                Saved.
+                保存完了
             </ActionMessage>
 
             <PrimaryButton :class="{ 'opacity-25': form.processing }" :disabled="form.processing">
-                Save
+                保存
             </PrimaryButton>
         </template>
     </FormSection>

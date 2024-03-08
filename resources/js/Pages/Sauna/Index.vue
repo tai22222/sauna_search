@@ -1,13 +1,11 @@
 <script setup>
 import AppLayout from '@/Layouts/AppLayout.vue';
-import { ref, computed, defineProps, onMounted, onErrorCaptured } from 'vue';
+import { ref, computed, defineProps, onMounted, onErrorCaptured, onUnmounted } from 'vue';
 
 import { Link, router, useForm, usePage } from '@inertiajs/vue3';
-import axios from 'axios';
 import { Inertia } from '@inertiajs/inertia'
 
 import FormSection from '@/Components/FormSection.vue';
-import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
@@ -16,6 +14,7 @@ import Textarea from '@/Components/Textarea.vue';
 import SelectBox from '@/Components/SelectBox.vue';
 import SectionBorder from '@/Components/SectionBorder.vue';
 
+// .envからbaseURLの設定
 const baseUrl = import.meta.env.VITE_APP_BASE_URL; 
 
 // 親コンポーネント(Create.vue)からオブジェクト、配列の受け渡し(CompositionAPI、ObjectはArrayも含む)
@@ -25,9 +24,27 @@ const props = defineProps({
     filters: Object,
 });
 
+// ウインドウの表示サイズを取得
+const windowWidth = ref(window.innerWidth);
+
+// ウインドサイズが変更されたら呼び出される
+const handleResize = () => {
+  windowWidth.value = window.innerWidth;
+};
+
+
 onMounted(() => {
-  console.log('コンポーネントがマウントされました');
-})
+  window.addEventListener("resize", handleResize);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('resize', handleResize);
+});
+
+// 画面サイズが810px未満の時は次へボタンと前へボタンは非表示
+const isLargeScreen = computed(() => {
+  return windowWidth.value > 810 ;
+});
 
 onErrorCaptured((err, instance, info) => {
   console.error('Error caught during component initialization:', err);
@@ -73,7 +90,7 @@ const saunaTemp = [
 // 水風呂温度(0~30)
 const waterTemp = [
   { id: 0, temp: 0 },
-  { id: 5, temp: 50 },
+  { id: 5, temp: 5 },
   { id: 10, temp: 10 },
   { id: 11, temp: 11 },
   { id: 12, temp: 12 },
@@ -113,31 +130,33 @@ const sortSaunas = (condition, order) => updateDataAndView({ sort: condition, or
 // 指定ページへの遷移
 const paginateTo = (page) => updateDataAndView({ page });
 
-
-// ソート機能
-// const sortSaunas = (sort, order) => {
-//   const params = new URLSearchParams(formData.value).toString();
-//   console.log(params);
-//   Inertia.visit(`${baseUrl}saunas?sort=${sort}&order=${order}&${params}`);
-// }
-
 // ページネーション
 // 現在のページ
-const currentPage = ref(1);
+const currentPage = ref(props.saunas.current_page);
+
+// 表示ページが5以上の時と、5未満の時の表示するページ数を配列に格納
+const pagesToShow = computed(() => {
+  let pages = [];
+  let startPage = Math.max(currentPage.value - 2, 1);
+  let endPage = Math.min(startPage + 4, props.saunas.last_page);
+
+  // 最初のページが1より大きい場合、開始ページを調整
+  if (endPage - startPage < 4) {
+    startPage = Math.max(endPage - 4, 1);
+  }
+
+  for (let page = startPage; page <= endPage; page++) {
+    pages.push(page);
+  }
+  return pages;
+});
+
 // 表示件数
 const itemsPerPage = ref(5);
 // 総件数
 const totalSaunaItems = ref(props.saunas.total); 
 // 最終ページの計算
 const totalPages = computed(() => Math.ceil(totalSaunaItems.value / itemsPerPage.value));
-
-// 指定ページへ遷移
-const paginateTo1 = (page) => { 
-  // 検索項目をURLからクエリ取得
-  const params = new URLSearchParams(formData.value).toString();
-  console.log(params);
-  Inertia.visit(`saunas?page=${page}&${params}&sort=${initialFilters.sort}&order=${initialFilters.order}`, { preserveState: true });
-};
 
 // 前へボタンのクリック時の処理
 const goToPreviousPage = () => {
@@ -175,9 +194,6 @@ const formatTime = (time) => {
       const [hour, minute] = time.split(':');
       return `${hour.padStart(2, '0')}:${minute.padStart(2, '0')}`;
 }
-
-console.log(props);
-console.log(baseUrl);
 </script>
 
 <template>
@@ -193,9 +209,8 @@ console.log(baseUrl);
               <div v-if="$page.props.jetstream.canUpdateProfileInformation">
 
                   <!-- 検索フォーム -->
-                  <FormSection @submitted="submitSearch" class="mb-16">
+                  <FormSection @submitted="submitSearch" class="mb-16 rounded-full" >
                       <template #title>
-                          【検索フォーム】
                       </template>
                       <template #description>
                       </template>
@@ -205,7 +220,7 @@ console.log(baseUrl);
                           <div class="col-span-6 sm:col-span-3 md:col-span-2">
                             <SelectBox 
                               id="prefecture" 
-                              label="都道府県 (※必須)" 
+                              label="都道府県" 
                               column="name"
                               v-model="formData.prefecture"
                               :initialValue="initialFilters.prefecture"
@@ -290,7 +305,7 @@ console.log(baseUrl);
                             </div>
 
                             <!-- 検索ボタン submit→POSTかGET -->
-                            <div class="col-span-6 md:col-span-2 bg-blue-400 rounded-full text-center min-h-12 ">
+                            <div class="col-span-6 md:col-span-2 bg-btn-main rounded-full text-center min-h-12 max-h-16 ">
                               <button 
                                 type="button" 
                                 class="btn btn-primary font-bold w-full h-full text-white rounded-full hover:bg-opacity-75 hover:shadow-lg active:scale-95 transition duration-150 ease-in-out" 
@@ -299,7 +314,7 @@ console.log(baseUrl);
                       </template>
                   </FormSection>
 
-                    <div class="flex justify-end mr-6 mb-6">
+                    <div class="flex justify-end text-gray mr-6 mb-6">
                       <div class="mr-4">
                         並び順：準備中
                         <ul class="hidden">
@@ -327,24 +342,23 @@ console.log(baseUrl);
                         <div class="block mb-8 md:flex">
                           <!-- メイン画像 -->
                           <div class="w-80 mr-4 mb-4">
-                            <a class="block rounded w-full bg-cover bg-no-repeat bg-center w-64 h-auto"
+                            <a class="block rounded w-full bg-cover bg-no-repeat bg-center h-auto"
                                :href="`${baseUrl}saunas/${sauna.id}`"
-                               :style="{ backgroundImage: `url(${sauna.images_facility?.main_image_url ? `${baseUrl}/storage/${sauna.images_facility.main_image_url}` : `${baseUrl}/storage/default-images/no_image.jpg`})`,
+                               :style="{ backgroundImage: `url(${sauna.images_facility?.main_image_url ? `${baseUrl}storage/${sauna.images_facility.main_image_url}` : `${baseUrl}storage/default-images/no_image.jpg`})`,
                                paddingBottom: '100%' }"></a>
                           </div>
 
                         <!-- 施設情報 -->
                         <div class="grid grid-cols-6 w-full">
-                          <div class="col-span-6 ml-8">
+                          <div class="col-span-6 ml-8 mb-4">
                             <h2 class="text-2xl font-bold mb-2">{{ sauna.facility_name || '-' }}</h2>
-                            <p class="mb-2">{{ sauna.facility_type?.type_name || '-' }}</p>
-                            <p class="mb-2">{{ sauna.address1 || '-' }}</p>
-                            <!-- <p class="mb-2">{{ sauna.address2 }}</p> -->
+                            <span class="mb-2">{{ sauna.facility_type?.type_name || '-' }}</span><span> - </span>
+                            <span class="mb-2">{{ sauna.address1 || '-' }}</span>
                           </div>
                           <!-- サウナ・水風呂情報 -->
-                          <div class="col-span-6 ml-8">
-                            <p class="mb-2">サウナ温度: {{ sauna.sauna_info?.temperature || '-' }}</p>
-                            <p class="mb-2">水風呂温度: {{ sauna.water_bath?.temperature || '-' }}</p>
+                          <div class="col-span-6 ml-8 mb-4">
+                            <span class="mb-2 text-red-500 mr-8"><span class="bg-red-500 text-white p-1 font-bold rounded-md">サウナ温度</span>  : {{ sauna.sauna_info?.temperature || '-' }}</span>
+                            <span class="mb-2 text-blue-700"><span class="bg-blue-700 text-white p-1 font-bold rounded-md">水風呂温度</span>  : {{ sauna.water_bath?.temperature || '-' }}</span>
                           </div>
                           <!-- 料金情報 -->
                           <div class="col-span-6 ml-8">
@@ -354,10 +368,10 @@ console.log(baseUrl);
                           <div class="col-span-6 ml-8">
                             <h3 class="text-lg font-semibold mb-2">営業時間</h3>
                             <ul v-if="sauna.business_hours && sauna.business_hours.length > 0"
-                                class="grid grid-cols-1 md:grid-cols-4">
+                                class="grid grid-cols-2 md:grid-cols-3">
                               <li v-for="day in sauna.business_hours"
                                   :key="day.day_of_week"
-                                  class="col-span-1 mb-1">
+                                  class="col-span-1 md:col-span-1 mb-1">
                                 {{ day.day_of_week }}: {{ formatTime(day.opening_time) }} - {{ formatTime(day.closing_time) }}
                                 <span v-if="day.is_closed" class="ml-1 text-red-500">(休業)</span>
                               </li>
@@ -378,59 +392,48 @@ console.log(baseUrl);
                                 class="w-12 h-12">
                               <a @click.prevent="goToFirstPage()" 
                                 class="flex items-center justify-center w-full h-full bg-gray-200 hover:bg-gray-300 rounded-full"
-                                href="#">&lt;&lt;</a>
+                                >&lt;&lt;</a>
                             </li>
                             <!-- 1ページ前へ遷移 -->
-                            <li v-if="saunas.current_page > 1">
-                              <a @click.prevent="goToPreviousPage()"
+                            <li v-if="saunas.current_page > 1 || isLargeScreen">
+                              <span v-if="isLargeScreen">
+                                <a @click.prevent="goToPreviousPage()"
                                 class="flex items-center px-0 justify-center w-12 h-full bg-gray-200 hover:bg-gray-300 rounded-full"
-                                href="#">&lt;</a>
+                                >&lt;</a>
+                              </span>
                             </li>
 
-                            <!-- 現在のページから（数字は正方形のままで、現在のページだけ特別なスタイルを適用）-->
-                            <div v-if="saunas.last_page <= 5"
-                            class="flex justify-center space-x-2 md:space-x-6">
-                              <li v-for="page in saunas.last_page"
+                            <!-- 現在のページから-->
+                            <div class="flex justify-center space-x-2 md:space-x-6">
+                              <li v-for="page in pagesToShow"
                                 :key="page"
                                 :class="page === saunas.current_page ? 'bg-blue-500 text-white' : 'bg-gray-200 hover:bg-gray-300'"
                                 class="w-12 h-12 rounded-full">
                                 <a @click.prevent="paginateTo(page)"
                                   class="block flex items-center justify-center rounded-full w-full h-full "
                                   :class="page === saunas.current_page ? 'pointer-events-none' : 'rounded-full'"
-                                  href="#">{{ page }}</a>
-                              </li>
-                            </div>
-                            <div v-else-if="saunas.last_page > 5"
-                              class="flex justify-center space-x-2 md:space-x-6">
-                              <li v-for="page in 5"
-                                :key="page"
-                                :class="page === saunas.current_page ? 'bg-blue-500 text-white' : 'bg-gray-200 hover:bg-gray-300'"
-                                class="w-12 h-12 rounded-full">
-                                <a @click.prevent="paginateTo(page)"
-                                  class="block flex items-center justify-center rounded-full w-full h-full "
-                                  :class="page === saunas.current_page ? 'pointer-events-none' : 'rounded-full'"
-                                  href="#">{{ page }}</a>
+                                  >{{ page }}</a>
                               </li>
                             </div>
 
                             <!-- 1ページ次へ遷移 -->
-                            <li v-if="saunas.current_page < saunas.last_page">
-                              <a @click.prevent="goToNextPage()"
+                            <li v-if="saunas.current_page < saunas.last_page || !isLargeScreen">
+                              <span v-if="isLargeScreen">
+                                <a @click.prevent="goToNextPage()"
                                 class="flex items-center justify-center w-12 h-12 bg-gray-200 hover:bg-gray-300 rounded-full"
-                                href="#">&gt;</a>
+                                >&gt;</a>
+                              </span>
                             </li>
                             <!-- 最終ページまで遷移 -->
                             <li v-if="saunas.current_page < saunas.last_page">
                               <a @click.prevent="goToLastPage()"
                                 class="flex items-center justify-center w-12 h-12 bg-gray-200 hover:bg-gray-300 rounded-full"
-                                href="#">&gt;&gt;</a>
+                                >&gt;&gt;</a>
                             </li>
                           </ul>
                         </nav>
                       </div>
                     </div>
-
-
                 </div>
             </div>
         </div>
