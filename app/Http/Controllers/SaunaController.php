@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Sauna;
+use App\Models\User;
 
 // saunasテーブルに外部キーで設定したテーブルのモデルの読み込み
 use App\Models\FacilityType;
@@ -29,13 +30,14 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Response;
 
 class SaunaController extends Controller
 {
   // 一覧表示
   public function index(Request $request){
-    logger('$requestの中身');
-    logger($request);
+    // logger('$requestの中身');
+    // logger($request);
     $prefectures = Prefecture::select('id', 'name')->where('delete_flag', 0)->get();
     // サウナ情報のクエリを取得
     $query = Sauna::select('id', 'facility_name', 'facility_type_id', 'usage_type_id', 'prefecture_id', 'address1', 'min_fee', 'created_at', 'updated_at');
@@ -145,8 +147,8 @@ class SaunaController extends Controller
         'water_bath_temperature_to' => $water_bath_temperature_to,
       ]
     ];
-    logger('$data');
-    logger()->info('Sending data to Vue component:', $data);
+    // logger('$data');
+    // logger()->info('Sending data to Vue component:', $data);
 
     return Inertia::render('Sauna/Index', [
       'saunas' => $saunas,  // 検索結果のデータ
@@ -434,7 +436,21 @@ class SaunaController extends Controller
 
   // 詳細表示
   public function show($id){
+
+    $sauna = Sauna::findOrFail($id);
+    $favoritesCount = $sauna->favoredByUsers()->count();
+
+    $user = auth()->user();
+
+    // ユーザーがいいねしているかどうかの状態
+    if ($user) {
+        // ユーザーがこのサウナ施設をお気に入りにしているかどうかをチェック
+        $isFavorited = $user->favoriteSaunas()->where('sauna_id', $sauna->id)->exists();
+    }
+
     $sauna = Sauna::select('id', 'facility_name', 'facility_type_id', 'usage_type_id', 'prefecture_id', 'address1', 'address2' , 'address3', 'access_text','tel', 'website_url', 'business_hours_detail', 'min_fee', 'fee_text');
+
+
 
     $sauna = $sauna->with([
       'facilityType' => function ($query) {
@@ -474,10 +490,11 @@ class SaunaController extends Controller
           $query->select('id', 'sauna_id','main_image_url', 'image1_url', 'image2_url', 'image3_url', 'image4_url', 'image5_url');
       },
     ])->findOrFail($id);
-
-    logger($sauna);
+    // logger($sauna);
     return Inertia::render('Sauna/Show', [
       'sauna' => $sauna,
+      'favoritesCount' => $favoritesCount,
+      'isFavorited' => $isFavorited,
     ]);
   }
 
@@ -594,14 +611,14 @@ class SaunaController extends Controller
       DB::commit();
       // 成功した場合の処理
       logger('DBの挿入が成功しました');
-      return redirect('/saunas')->with('success', '登録が成功しました。');
+      return redirect('/saunas/')->with('flash.successMessage', '登録が成功しました。');
 
     } catch (\Exception $e) {
         DB::rollBack();
         // エラーハンドリング
         logger('DBの挿入が失敗しました');
         logger($e->getMessage());
-        return back()->withInput()->with('error', '登録中にエラーが発生しました。');
+        return back()->withInput()->with('flash.errorMessage', '登録中にエラーが発生しました。');
     }
   }
 
@@ -660,6 +677,44 @@ class SaunaController extends Controller
     }
   }
 
+
+
+
+
+  // お気に入り追加と解除機能
+  public function toggleFavorite(Request $request, $sauna_id)
+  {
+    logger($request);
+    $data = $request->all();
+    logger($data);
+    logger('コントローラ入った');
+      $user = User::findOrFail($request->user_id);
+      $saunaId = $sauna_id;
+      logger($saunaId);
+      $sauna = Sauna::findOrFail($saunaId);
+    //   if (!$user) {
+    //     // ユーザーが認証されていない場合の処理
+    //     return response()->json(['error' => 'Unauthorized'], 401);
+    // }
+      logger($user);
+
+
+      $isFavorite = $user->favoriteSaunas()->where('sauna_id', $saunaId)->exists();
+
+      if ($isFavorite) {
+          // お気に入り解除
+          $user->favoriteSaunas()->detach($saunaId);
+      } else {
+          // お気に入りに追加
+          $user->favoriteSaunas()->attach($saunaId);
+      }
+      
+      // 更新後のお気に入り合計数を取得
+      $favoritesCount = $sauna->favoredByUsers()->count();
+
+      return Response::json(['success' => true, 'favoritesCount' => $favoritesCount]);
+      // return inertia('Sauna/Show', ['favoritesCount' => $favoritesCount]);
+  }
 }
 
 

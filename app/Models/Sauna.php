@@ -80,4 +80,10 @@ class Sauna extends Model
   {
       return $this->hasMany(review::class);
   }
+
+  // お気に入り情報に必要なリレーション(多対多)
+  public function favoredByUsers()
+  {
+      return $this->belongsToMany(User::class, 'favorites_facilities', 'sauna_id', 'user_id');
+  }
 }

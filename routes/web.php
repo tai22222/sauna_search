@@ -6,6 +6,7 @@ use Inertia\Inertia;
 
 use App\Http\Controllers\SaunaController;
 use App\Http\Controllers\ReviewController;
+use App\Http\Controllers\UserController;
 use App\Http\Middleware\LogRouteActivity;
 
 /*
@@ -35,8 +36,11 @@ Route::middleware([
   )->name('dashboard');
 });
 
-// アカウント削除
-// Route::get();
+// マイページ
+Route::get('/mypage', [UserController::class, 'index'])->name('profile.mypage');
+
+// サウナ施設のお気に入り
+// Route::post('/saunas/{id}/favorite', [SaunaController::class, 'toggleFavorite'])->name('sauna.favorite');
 
 
 // saunas 一覧表示(検索画面)(未ログイン時でも表示)

@@ -54,7 +54,7 @@ const { sauna, saunaInfo, waterBath, businessHours, imagesFacilities,
   saunaTypes, stoveTypes, heatTypes, 
   waterTypes, bathTypes 
 } = usePage().props;
-
+console.log(businessHours);
 const form = useForm({
     _method: 'PUT',
 
@@ -258,23 +258,8 @@ const updateSaunaInformation = () => {
         }
     });
 
-    // Object.entries(form).forEach(([key, value]) => {
-    //     // 画像フィールドの場合はファイルオブジェクトを追加
-    //     if (value !== null) {
-    //       if (key.includes('_url') && value instanceof File) {
-    //           console.log('画像はいったよ');
-    //           // ファイルが選択されている場合のみ追加
-    //           if (form[key] instanceof File) {
-    //               formData.append(key, form[key]);
-    //           }
-    //       } else {
-    //           console.log('がぞう以外だよ');
-    //           formData.append(key, value);
-    //       }
-    //     }
-    // });
-    console.log('put送信の中身');
-    console.log(...formData.entries());
+    // console.log('put送信の中身');
+    // console.log(...formData.entries());
 
     // PUTリクエストを送信(Content-Typeを指定しない場合Laravel側で認識できなかった)
     axios.put(`/sauna_search/public/api/sauna/${props.sauna.id}`, formData, {

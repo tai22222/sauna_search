@@ -3,6 +3,7 @@ import AppLayout from '@/Layouts/AppLayout.vue';
 import { ref, computed, defineProps } from 'vue';
 import { usePage, useForm } from '@inertiajs/vue3';
 import { Inertia } from '@inertiajs/inertia'
+import axios from 'axios';
 
 import SectionBorder from '@/Components/SectionBorder.vue';
 import FormSection from '@/Components/FormSection.vue';
@@ -12,6 +13,12 @@ import SecondaryButton from '@/Components/SecondaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
 import Textarea from '@/Components/Textarea.vue';
 
+// Laravel (app.blade.php)のCSRFトークン取得
+const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+// axiosのデフォルトヘッダーにCSRFトークンを設定
+axios.defaults.headers.common['X-CSRF-TOKEN'] = csrfToken;
+
 // ベースURLの設定
 const baseUrl = import.meta.env.VITE_APP_BASE_URL; 
 
@@ -19,8 +26,10 @@ const baseUrl = import.meta.env.VITE_APP_BASE_URL;
 const props = defineProps({
     sauna: Object,
     auth: Object,
+    favoritesCount: Number,
+    isFavorited: Boolean,
 });
-
+console.log(props);
 const { sauna, auth } = usePage().props;
 
 // propsから取得したデータがからの場合は指定の文字列を表示する
@@ -157,6 +166,23 @@ const closeWriteBoard = () => {
   writeBoard.value = false;
 }
 
+const beforeEnter = (el) => {
+  el.style.opacity = 0;
+}
+
+const enter = (el, done) => {
+  el.offsetHeight;
+  el.style.transition = 'opacity 0.5s ease';
+  el.style.opacity = 1;
+  done();
+}
+
+const leave = (el, done) => {
+  el.style.opacity = 0;
+  el.style.transition = 'opacity 0.5s ease';
+  setTimeout(() => done(), 500);
+}
+
 const photoInput = ref(null);
 const photoPreview = ref(null);
 
@@ -232,11 +258,34 @@ const createReview = () => {
   })
 }
 
-
 const count = ref(data.content);
 // 文字数のカウント
 const updateCount = () => {
   count.value = data.content.length;
+}
+
+const isFavorited = ref(props.isFavorited);
+const favoritesCount = ref(props.favoritesCount);
+// お気に入りの追加。解除のメソッド
+const toggleFavorite = async() => {
+  try {
+    // UIを即時更新
+    isFavorited.value ? favoritesCount.value-- : favoritesCount.value++;
+    const previousIsFavorited = isFavorited.value;
+    isFavorited.value = !isFavorited.value;
+    console.log(favoritesCount);
+    console.log(isFavorited);
+    // APIリクエストの送信
+    const response = await axios.post('/sauna_search/public/api/saunas/44/toggle-favorite', { sauna_id: sauna.id, user_id: auth.user.id}, { withCredentials: true })
+    favoritesCount.value = response.data.favoritesCount;
+    console.log(favoritesCount);
+    console.log(isFavorited);
+  } catch(error){
+    console.error('お気に入りのトグルに失敗しました');
+    // エラーが発生した場合は、UIの更新を元に戻す
+    favoritesCount.value = previousIsFavorited ? favoritesCount.value + 1 : favoritesCount.value - 1;
+    isFavorited.value = previousIsFavorited;
+  }
 }
 
 // 編集ページへ遷移
@@ -266,11 +315,14 @@ const goBack = () => {
         </template>
 
         <div class="relative">
-          
 
-          <div v-show="writeBoard" 
+
+          <transition @before-enter="beforeEnter"
+                      @enter="enter"
+                      @leave="leave">
+          <div v-if="writeBoard" 
                @click.prevent="closeWriteBoard()"
-               class="absolute bg-gray-800/40 h-full w-full">
+               class="absolute bg-gray-800/40 h-full w-full ">
             <div @click.stop class="max-w-5xl mx-auto pt-24">
               <div>
                 <FormSection @submitted="createReview">
@@ -371,9 +423,8 @@ const goBack = () => {
                               </SecondaryButton>
                               <!-- <InputError :message="form.errors.photo" class="mt-2" /> -->
                             </div>
-
-
                         </template>
+
 
                         <template #actions>
                           <button 
@@ -382,12 +433,12 @@ const goBack = () => {
                             サ活の投稿
                         </button>
                         </template>
-
-
                     </FormSection>
               </div>
             </div>
           </div>
+          </transition>
+
 
           <div>
             <div class="max-w-7xl mx-auto py-10 sm:px-6 lg:px-8">
@@ -405,16 +456,18 @@ const goBack = () => {
                         <div class="flex justify-between mb-8">
                           <div class="flex px-4 py-2">
                             <div class="pr-8">
-                              <button class="px-4 py-2 text-gray hover:bg-blue-400 hover:text-white font-bold border-2 rounded-lg">ツイートする</button>
+                              <button class="px-4 py-2 text-gray hover:bg-blue-400 hover:text-white font-bold border-2 rounded-lg button-transition">ツイートする</button>
                             </div>
                             <div>
-                              <button class="px-4 py-2  text-gray hover:bg-blue-400 hover:text-white font-bold border-2 rounded-lg">シェアする</button>
+                              <button class="px-4 py-2  text-gray hover:bg-blue-400 hover:text-white font-bold border-2 rounded-lg button-transition">シェアする</button>
                             </div>
                           </div>
 
                           <div class="flex px-4 py-2">
                             <div class="pr-8">
-                              <button class="px-4 py-2  text-blue-600 hover:bg-blue-600 hover:text-white font-bold border-2 border-blue-600 rounded-lg">お気に入り</button>
+                              <button class="px-4 py-2 font-bold border-2 border-blue-600 rounded-lg"
+                                      :class="isFavorited ? 'text-white bg-blue-600 border-blue-600 hover:text-blue-600 hover:bg-white button-transition' : 'text-blue-600 hover:bg-blue-600 hover:text-white border-blue-600 button-transition'"
+                                      @click="toggleFavorite">お気に入り <span>{{ favoritesCount }}</span> </button>
                             </div>
                             <div>
                               <button @click.prevent="openWriteReview()" class="px-4 py-2  bg-gray-800 hover:bg-gray-800/80 text-white font-bold rounded-lg">サ活の投稿</button>

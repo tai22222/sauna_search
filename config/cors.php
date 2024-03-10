@@ -29,6 +29,8 @@ return [
 
     'max_age' => 0,
 
-    'supports_credentials' => false,
+    // 'supports_credentials' => false,
+    // axiosを使用したapiでの通信の時(認証情報を含むクロスオリジンリクエストを許可)
+    'supports_credentials' => true,
 
 ];

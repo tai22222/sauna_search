@@ -28,7 +28,7 @@ class ReviewController extends Controller
   }
 
   // 新規作成処理
-  public function store(Request $request){
+  public function store(SaunaRequest $request){
     $data = $request->all();
     logger($data);
 

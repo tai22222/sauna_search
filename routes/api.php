@@ -30,3 +30,7 @@ Route::post('/sauna/{id}', [SaunaController::class, 'updateImage']);
 Route::post('/sauna/index', [SaunaController::class, 'updateImage']);
 
 
+// お気に入り機能
+Route::post('/saunas/{id}/toggle-favorite', [SaunaController::class, 'toggleFavorite']);
+
+

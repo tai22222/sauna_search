@@ -55,6 +55,7 @@ const setupFlashMessages = () => {
     }, 3000);
   }
 };
+// console.log(flash);
 
 // コンポーネントがマウントされた時にフラッシュメッセージをセットアップする
 onMounted(() => {
@@ -67,9 +68,6 @@ onMounted(() => {
 const logout = () => {
     router.post(route('logout'));
 };
-
-// アカウント削除に関する定義
-
 </script>
 
 <template>
@@ -192,7 +190,7 @@ const logout = () => {
                                             アカウント設定
                                         </div>
 
-                                        <DropdownLink :href="route('profile.show')">
+                                        <DropdownLink :href="route('profile.mypage')">
                                             マイページ
                                         </DropdownLink>
                                         <DropdownLink :href="route('profile.show')">
@@ -278,7 +276,7 @@ const logout = () => {
                         </div>
 
                         <div class="mt-3 space-y-1">
-                            <ResponsiveNavLink :href="route('profile.show')" :active="route().current('profile.show')">
+                            <ResponsiveNavLink :href="route('profile.mypage')" :active="route().current('profile.mypage')">
                                 マイページ
                             </ResponsiveNavLink>
                             <ResponsiveNavLink :href="route('profile.show')" :active="route().current('profile.show')">
@@ -348,12 +346,12 @@ const logout = () => {
                 </div>
             </header>
             <!-- フラッシュメッセージの表示 -->
-            <transition name="fade">
+            <transition name="flash">
               <div v-if="successMessage" class="text-center bg-green-500/70 text-white font-bold p-4 rounded mb-4" role="alert">
               {{ successMessage }}
             </div>
             </transition>
-            <transition name="fade">
+            <transition name="flash">
               <div v-if="errorMessage" class="text-center bg-red-500/70 text-white font-bold p-4 rounded mb-4" role="alert">
               {{ errorMessage }}
             </div>

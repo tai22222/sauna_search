@@ -81,4 +81,10 @@ class User extends Authenticatable
     {
         return $this->hasMany(review::class);
     }
+
+    // お気に入り情報に必要なリレーション
+    public function favoriteSaunas()
+    {
+        return $this->belongsToMany(Sauna::class, 'favorites_facilities', 'user_id', 'sauna_id');
+    }
 }
