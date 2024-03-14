@@ -15,6 +15,9 @@ import TextInput from '@/Components/TextInput.vue';
 import Textarea from '@/Components/Textarea.vue';
 import SelectBox from '@/Components/SelectBox.vue';
 
+// バリデーション
+import { isValidText, isValidMax, isValidPhone, isValidUrl, isValidNumber, isValidImageSize, isValidImageType} from '@/utils/validators';
+
 // Laravel (app.blade.php)のCSRFトークン取得
 const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
@@ -23,7 +26,6 @@ axios.defaults.headers.common['X-CSRF-TOKEN'] = csrfToken;
 
 // ベースURLの設定
 const baseUrl = import.meta.env.VITE_APP_BASE_URL; 
-
 
 // 親コンポーネント(Create.vue)からオブジェクト、配列の受け渡し(CompositionAPI、ObjectはArrayも含む)
 const props = defineProps({
@@ -235,11 +237,12 @@ const selectDay = (day) => {
 const verificationLinkSent = ref(null);
 const photoPreview = ref(null);
 const photoInput = ref(null);
-
+console.log(props.imagesFacilities);
+// todo axiosを使用しなくても表示できるので修正する
 // DB挿入画像の配列
 const imageInputs = ref([]);
 const imageUrls = ref([
-  { key: 'main_image_url', value: '' },
+  { key: 'main_image_url', value: props.imagesFacilities[0].main_image_url },
   { key: 'image1_url', value: '' },
   { key: 'image2_url', value: '' },
   { key: 'image3_url', value: '' },
@@ -308,12 +311,8 @@ onMounted(() => {
     imageInputs.value.push(input);
   });
 
-  fetchImageUrls();
+  // fetchImageUrls();
 });
-
-// const sendEmailVerification = () => {
-//     verificationLinkSent.value = true;
-// };
 
 // 画像選択ボタンを押した時に、input要素を取得してクリック
 const selectNewPhoto = (index) => {
@@ -327,8 +326,24 @@ const selectNewPhoto = (index) => {
 // 画像を選択した時の処理
 const selectImage = (event, field, index) => {
     const file = event.target.files[0];
-    form[field] = file;
 
+    // サイズのバリデーション
+    let validationResult = isValidImageSize(file);
+    if (!validationResult.isValid) {
+      form.errors[field] = validationResult.errorMessage;
+      return;
+    }
+
+    // 形式のバリデーション
+    validationResult = isValidImageType(file);
+    if (!validationResult.isValid) {
+      form.errors[field] = validationResult.errorMessage;
+      return;
+    }
+
+    form.errors[field] = ""; // エラーをクリア
+
+    form[field] = file;
     // プレビュー画像表示のためにimageUrlsのvalueを更新(blobオブジェクト生成)
     imageUrls.value[index].value = URL.createObjectURL(file);
 };
@@ -354,6 +369,52 @@ const deleteImage = (field, index) => {
     // プレビュー画像表示のためにimageUrlsのvalueを更新
     imageUrls.value[index].value = '';
 };
+
+// バリデーション
+const validText = (field, max, min) => {
+  const {isValid, errorMessage } = isValidText(form[field], max, min);
+  if(!isValid) {
+    form.errors[field] = errorMessage;
+  } else {
+    form.errors[field] = "";
+  }
+}
+
+const validMax = (field, max) => {
+  const {isValid, errorMessage} = isValidMax(form[field], max);
+  if(!isValid) {
+    form.errors[field] = errorMessage;
+  } else {
+    form.errors[field] = "";
+  }
+}
+
+const validPhone = () => {
+  const { isValid, errorMessage } = isValidPhone(form.tel);
+  if(!isValid && form.tel !== "") {
+    form.errors.tel = errorMessage;
+  } else {
+    form.errors.tel = "";
+  }
+}
+
+const validUrl = () => {
+  const { isValid, errorMessage} = isValidUrl(form.website_url);
+  if(!isValid) {
+    form.errors.website_url = errorMessage;
+  } else {
+    form.errors.website_url = "";
+  }
+}
+
+const validNumber = (field) => {
+  const { isValid, errorMessage } = isValidNumber(form[field]);
+  if(!isValid) {
+    form.errors[field] = errorMessage;
+  } else {
+    form.errors[field] = "";
+  }
+}
 </script>
 
 <template>
@@ -397,6 +458,7 @@ const deleteImage = (field, index) => {
                                   class="mt-1 block w-full"
                                   autocomplete="facility_name"
                                   placeholder="例： サウナ＆スパ カプセルホテル 大東洋"
+                                  @blur="() => validText('facility_name', 50, 0)"
                               />
                               <InputError :message="form.errors.facility_name" class="mt-2" />
                           </div>
@@ -409,7 +471,6 @@ const deleteImage = (field, index) => {
                                 v-model="form.facility_type_id"
                                 :initialValue="selectedFacilityType" 
                                 :options="facilityTypesArray" 
-                                :error="form.errors.facility_type_id" 
                               />
                           </div>
 
@@ -421,7 +482,6 @@ const deleteImage = (field, index) => {
                                 v-model="form.usage_type_id"
                                 :initialValue="selectedUsageType" 
                                 :options="usageTypeArray" 
-                                :error="form.errors.usage_type_id" 
                               />
                           </div>
 
@@ -434,7 +494,6 @@ const deleteImage = (field, index) => {
                                 v-model="form.prefecture_id"
                                 :initialValue="selectedPrefecture" 
                                 :options="prefectureArray" 
-                                :error="form.errors.prefecture_id" 
                               />
                           </div>
 
@@ -448,6 +507,7 @@ const deleteImage = (field, index) => {
                                   class="mt-1 block w-full"
                                   autocomplete="address1"
                                   placeholder="例： 大阪市北区中崎西"
+                                  @blur="() => validMax('address1', 50)"
                               />
                               <InputError :message="form.errors.address1" class="mt-2" />
                           </div>
@@ -461,6 +521,7 @@ const deleteImage = (field, index) => {
                                   class="mt-1 block w-full"
                                   autocomplete="address2"
                                   placeholder="例： 2-1-9"
+                                  @blur="() => validMax('address2', 50)"
                               />
                               <InputError :message="form.errors.address2" class="mt-2" />
                           </div>
@@ -474,6 +535,7 @@ const deleteImage = (field, index) => {
                                   class="mt-1 block w-full"
                                   autocomplete="address3"
                                   placeholder="例： 中崎観光ビル大東洋"
+                                  @blur="() => validMax('address3', 50)"
                               />
                               <InputError :message="form.errors.address3" class="mt-2" />
                           </div>
@@ -491,6 +553,7 @@ const deleteImage = (field, index) => {
               JR「大阪」駅、地下鉄・阪急・阪神「梅田」駅より東へ徒歩10分程度
               （HEPナビオ、ドン・キホーテから東へ200m ※「都島通り」沿い）
               ・地下鉄谷町線「中崎町」駅4番出口より徒歩3分"
+                                  @blur="() => validMax('access_text', 1000)"
                               />
                               <InputError :message="form.errors.access_text" class="mt-2" />
                           </div>
@@ -505,6 +568,7 @@ const deleteImage = (field, index) => {
                                   class="mt-1 block w-full"
                                   autocomplete="tel"
                                   placeholder="例： 06-6312-7522"
+                                  @blur="validPhone"
                               />
                               <InputError :message="form.errors.tel" class="mt-2" />
                           </div>
@@ -519,6 +583,7 @@ const deleteImage = (field, index) => {
                                   class="mt-1 block w-full"
                                   autocomplete="website_url"
                                   placeholder="例： http://www.daitoyo.co.jp/spa/mens/"
+                                  @blur="validUrl"
                               />
                               <InputError :message="form.errors.website_url" class="mt-2" />
                           </div>
@@ -588,8 +653,6 @@ const deleteImage = (field, index) => {
                                             id="'opening_time_' + alfDay"
                                             v-model="form['opening_time_' + alfDay]"
                                             type="time"
-                                            class="mt-1 block w-full"
-                                            placeholder="例： 12:00"
                                         />
                                     </div>
                                     <div class="col-span-2">
@@ -599,8 +662,6 @@ const deleteImage = (field, index) => {
                                             id="'closing_time_' + alfDay"
                                             v-model="form['closing_time_' + alfDay]"
                                             type="time"
-                                            class="mt-1 block w-full"
-                                            placeholder="例： 12:00"
                                         />
                                     </div>
                                   </div>
@@ -619,6 +680,7 @@ const deleteImage = (field, index) => {
                                   class="mt-1 block w-full min-h-48"
                                   autocomplete="business_hours_detail"
                                   placeholder="例： 毎日営業しているが、午前10時から午後12時までは清掃のため入浴不可"
+                                  @blur="validMax('business_hours_detail', 1000)"
                               />
                               <InputError :message="form.errors.business_hours_detail" class="mt-2" />
                           </div>
@@ -634,6 +696,7 @@ const deleteImage = (field, index) => {
                                   class="mt-1 block w-full"
                                   autocomplete="min_fee"
                                   placeholder="例： 300"
+                                  @blur="() => validNumber('min_fee')"
                                 />
                                 <span class="absolute inset-y-0 right-4 pr-3 flex items-center">円</span>
                               </div>
@@ -656,6 +719,7 @@ const deleteImage = (field, index) => {
 
               ※深夜料金　800円
               （深夜２時以降は深夜料金がかかります（60分コース以外)"
+                                  @blur="validMax('fee_text', 1000)"
                               />
                               <InputError :message="form.errors.fee_text" class="mt-2" />
                           </div>
@@ -673,7 +737,6 @@ const deleteImage = (field, index) => {
                                 v-model="form.sauna_type_id"
                                 :initialValue="selectedSaunaType" 
                                 :options="saunaTypeArray" 
-                                :error="form.errors.sauna_type_id" 
                               />
                           </div>
 
@@ -728,6 +791,7 @@ const deleteImage = (field, index) => {
                                       class="mt-1 block w-full pr-12 col-span-1"
                                       autocomplete="temperature"
                                       placeholder="95"
+                                      @blur="() => validNumber('temperature_sauna')"
                                   />
                                   <span class="absolute inset-y-0 right-0 pr-3 flex items-center">度</span>
                                 </div>
@@ -749,6 +813,7 @@ const deleteImage = (field, index) => {
                                       class="mt-1 block w-full pr-12 col-span-1"
                                       autocomplete="capacity"
                                       placeholder="10"
+                                      @blur="() => validNumber('capacity_sauna')"
                                   />
                                   <span class="absolute inset-y-0 right-0 pr-3 flex items-center">人</span>
                                 </div>
@@ -767,6 +832,7 @@ const deleteImage = (field, index) => {
                                   class="mt-1 block w-full min-h-32"
                                   autocomplete="additional_info"
                                   placeholder="例： タオルに水を染み込ませて持ち込まないローカルなルール"
+                                  @blur="() => validMax('additional_info_sauna')"
                               />
                               <InputError :message="form.errors.additional_info_sauna" class="mt-2" />
                           </div>
@@ -785,7 +851,6 @@ const deleteImage = (field, index) => {
                                 v-model="form.bath_type_id"
                                 :initialValue="selectedBathType" 
                                 :options="bathTypeArray" 
-                                :error="form.errors.bath_type_id" 
                               />
                           </div>
 
@@ -797,7 +862,6 @@ const deleteImage = (field, index) => {
                                 v-model="form.water_type_id"
                                 :initialValue="selectedWaterType" 
                                 :options="waterTypeArray" 
-                                :error="form.errors.water_type_id" 
                               />
                           </div>
 
@@ -814,6 +878,7 @@ const deleteImage = (field, index) => {
                                       class="mt-1 block w-full pr-12 col-span-1"
                                       autocomplete="temperature"
                                       placeholder="15"
+                                      @blur="() => validNumber('temperature_water')"
                                   />
                                   <span class="absolute inset-y-0 right-0 pr-3 flex items-center">度</span>
                                 </div>
@@ -835,6 +900,7 @@ const deleteImage = (field, index) => {
                                       class="mt-1 block w-full pr-12 col-span-1"
                                       autocomplete="capacity"
                                       placeholder="5"
+                                      @blur="() => validNumber('capacity_water')"
                                   />
                                   <span class="absolute inset-y-0 right-0 pr-3 flex items-center">人</span>
                                 </div>
@@ -851,7 +917,6 @@ const deleteImage = (field, index) => {
                                 v-model="form.deep_water"
                                 :initialValue="selectedSaunaType" 
                                 :options="waterDepthOptions" 
-                                :error="form.errors.deep_water" 
                               />
                           </div>
 
@@ -865,6 +930,7 @@ const deleteImage = (field, index) => {
                                   class="mt-1 block w-full min-h-32"
                                   autocomplete="additional_info"
                                   placeholder="例： 水風呂ではなく掛け流しタイプ"
+                                  @blur="() => validMax('additional_info_sauna')"
                               />
                               <InputError :message="form.errors.access_text_water" class="mt-2" />
                           </div>
@@ -877,7 +943,6 @@ const deleteImage = (field, index) => {
                       <div class="col-span-6">
                             <!-- 施設メイン画像のinput -->
                             <div class="grid grid-cols-6 gap-8">
-
                                 <div v-for="(image, index) in imageUrls" key="index" class="col-span-6 md:col-span-2 sm:col-span-3">
                                   <input
                                     :ref="`imageInputs${index}`"
@@ -911,7 +976,6 @@ const deleteImage = (field, index) => {
                                   <SecondaryButton class="mt-2 mr-2" type="button" @click.prevent="selectNewPhoto(index)">
                                       画像を選択
                                   </SecondaryButton>
-
                                   <SecondaryButton
                                       v-if="image.value"
                                       type="button"
@@ -920,8 +984,7 @@ const deleteImage = (field, index) => {
                                   >
                                       削除
                                   </SecondaryButton>
-
-                                  <InputError :message="form.errors.photo" class="mt-2" />
+                                  <InputError :message="form.errors[image.key]" class="mt-2" />
                                 </div>
                             </div>
                         </div>
@@ -938,8 +1001,6 @@ const deleteImage = (field, index) => {
                           </PrimaryButton>
                       </template>
                   </FormSection>
-
-    
               </div>
           </div>
         </div>

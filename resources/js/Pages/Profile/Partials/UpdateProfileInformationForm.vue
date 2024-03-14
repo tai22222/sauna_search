@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, defineProps} from 'vue';
-
 import { Link, router, useForm, usePage } from '@inertiajs/vue3';
+
 import ActionMessage from '@/Components/ActionMessage.vue';
 import FormSection from '@/Components/FormSection.vue';
 import InputError from '@/Components/InputError.vue';
@@ -11,6 +11,9 @@ import SecondaryButton from '@/Components/SecondaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
 import Textarea from '@/Components/Textarea.vue';
 import SelectBox from '@/Components/SelectBox.vue';
+
+// バリデーション
+import { isValidText, isValidEmail, isValidMax } from '@/utils/validators';
 
 // 親コンポーネント(Create.vue)からオブジェクト、配列の受け渡し
 const props = defineProps({
@@ -74,10 +77,6 @@ const updateDay = (type, value) => {
   form[prop] = value;
 };
 
-const verificationLinkSent = ref(null);
-const photoPreview = ref(null);
-const photoInput = ref(null);
-
 // フォーム送信時の画像データをformに詰めて、formをpostする
 const updateProfileInformation = () => {
     if (photoInput.value) {
@@ -91,26 +90,29 @@ const updateProfileInformation = () => {
     });
 };
 
+const verificationLinkSent = ref(null);
+
 // Eメール変更時
 const sendEmailVerification = () => {
     verificationLinkSent.value = true;
 };
 
+const photoPreview = ref(null);
+const photoInput = ref(null);
+
+// inputをクリックした挙動を発生
 const selectNewPhoto = () => {
     photoInput.value.click();
 };
 
+// 選択した画像をプレビュー画像として使用できるようにする
 const updatePhotoPreview = () => {
     const photo = photoInput.value.files[0];
-
     if (! photo) return;
-
     const reader = new FileReader();
-
     reader.onload = (e) => {
         photoPreview.value = e.target.result;
     };
-
     reader.readAsDataURL(photo);
 };
 
@@ -129,6 +131,34 @@ const clearPhotoFileInput = () => {
         photoInput.value.value = null;
     }
 };
+
+// バリデーション
+const validText = () => {
+  const { isValid, errorMessage } = isValidText(form.name);
+  if(!isValid){
+    form.errors.name = errorMessage;
+  } else {
+    form.errors.name = "";
+  }
+}
+
+const validEmail = () => {
+  const { isValid, errorMessage } = isValidEmail(form.email);
+  if(!isValid) {
+    form.errors.email = errorMessage;
+  } else {
+    form.errors.email = "";
+  }
+}
+
+const validMax = (field, max) => {
+  const {isValid, errorMessage } = isValidMax(form[field], max);
+  if(!isValid) {
+    form.errors[field] = errorMessage;
+  } else {
+    form.errors[field] = "";
+  }
+}
 </script>
 
 <template>
@@ -142,7 +172,6 @@ const clearPhotoFileInput = () => {
         </template>
 
         <template #form>
-          <!-- {{ user }} -->
             <!-- プロフィール写真 -->
             <div v-if="$page.props.jetstream.managesProfilePhotos" class="col-span-6">
                 <!-- プロフィール写真のinput -->
@@ -152,13 +181,11 @@ const clearPhotoFileInput = () => {
                     class="hidden"
                     @change="updatePhotoPreview"
                 >
-
                 <InputLabel for="photo" value="アイコン画像" />
 
                 <!-- 現在のプロフィール写真 -->
                 <div v-show="! photoPreview" class="mt-2">
                     <img :src="user.profile_photo_url" :alt="user.name" class="rounded-full h-20 w-20 object-cover">
-
                 </div>
 
                 <!-- 新しいのプロフィール写真のプレビュー -->
@@ -170,10 +197,11 @@ const clearPhotoFileInput = () => {
                 </div>
 
                 <!-- プロフィール画像追加・削除ボタン -->
-                <SecondaryButton class="mt-2 mr-2" type="button" @click.prevent="selectNewPhoto">
+                <SecondaryButton class="mt-2 mr-2"
+                                 type="button"
+                                 @click.prevent="selectNewPhoto">
                     画像を選択
                 </SecondaryButton>
-
                 <SecondaryButton
                     v-if="user.profile_photo_path"
                     type="button"
@@ -195,6 +223,7 @@ const clearPhotoFileInput = () => {
                     type="text"
                     class="mt-1 block w-full"
                     autocomplete="name"
+                    @blur="validText"
                 />
                 <InputError :message="form.errors.name" class="mt-2" />
             </div>
@@ -208,6 +237,7 @@ const clearPhotoFileInput = () => {
                     type="email"
                     class="mt-1 block w-full"
                     autocomplete="username"
+                    @blur="validEmail"
                 />
                 <InputError :message="form.errors.email" class="mt-2" />
 
@@ -234,7 +264,7 @@ const clearPhotoFileInput = () => {
                 </div>
             </div>
 
-            <!-- gender_id -->
+            <!-- 性別 -->
             <div class="col-span-6">
               <InputLabel for="gender_id" value="性別" />
               <div class="mt-1">
@@ -248,11 +278,11 @@ const clearPhotoFileInput = () => {
                 />
                 <span class="ml-2">{{ option.label }}</span>
                 </label>
-            </div>
+              </div>
             <InputError :message="form.errors.gender_id" class="mt-2" />
             </div>
 
-            <!-- Birth Year, Month, Day -->
+            <!-- 生年月日 -->
             <div class="col-span-6 sm:col-span-6">
               <div class="mb-2">
                 <p class="text-sm font-medium text-gray-700">生年月日</p>
@@ -288,7 +318,7 @@ const clearPhotoFileInput = () => {
               </div>
             </div>
 
-            <!-- debut_year,debut_month -->
+            <!-- サウナ デビュー年月 -->
             <div class="col-span-6 sm:col-span-6">
               <div class="mb-2">
                 <p class="text-sm font-medium text-gray-700">サウナデビュー年月</p>
@@ -325,6 +355,7 @@ const clearPhotoFileInput = () => {
                     type="text"
                     class="mt-1 block w-full"
                     autocomplete="home_sauna"
+                    @blur="() => validMax('home_sauna', 50)"
                 />
                 <InputError :message="form.errors.home_sauna" class="mt-2" />
             </div>
@@ -338,6 +369,7 @@ const clearPhotoFileInput = () => {
                     type="text"
                     class="mt-1 block w-full"
                     autocomplete="profile_text"
+                    @blur="() => validMax('profile_text', 250)"
                 />
                 <InputError :message="form.errors.profile_text" class="mt-2" />
             </div>

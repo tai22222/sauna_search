@@ -31,7 +31,7 @@ class AppServiceProvider extends ServiceProvider
 
       Inertia::share('appName', config('app.name'));
 
-      // もしくは、ルートテンプレートの指定
+      // ルートテンプレートの指定
       Inertia::setRootView('layouts.app');
     }
 }

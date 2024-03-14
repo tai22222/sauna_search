@@ -276,7 +276,7 @@ const toggleFavorite = async() => {
     console.log(favoritesCount);
     console.log(isFavorited);
     // APIリクエストの送信
-    const response = await axios.post('/sauna_search/public/api/saunas/44/toggle-favorite', { sauna_id: sauna.id, user_id: auth.user.id}, { withCredentials: true })
+    const response = await axios.post(`/sauna_search/public/api/saunas/${sauna.id}/toggle-favorite`, { sauna_id: sauna.id, user_id: auth.user.id}, { withCredentials: true })
     favoritesCount.value = response.data.favoritesCount;
     console.log(favoritesCount);
     console.log(isFavorited);

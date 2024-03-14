@@ -28,6 +28,7 @@ class Sauna extends Model
       'delete_flag'
     ];
 
+  // saunasテーブルが主テーブル
   // サウナ情報とのリレーション(1対1)
   public function saunaInfo()
   {
@@ -52,7 +53,20 @@ class Sauna extends Model
       return $this->hasOne(ImagesFacility::class);
   }
 
+  // レビュー情報とのリレーション(1対多)
+  public function review()
+  {
+      return $this->hasMany(review::class);
+  }
 
+  // お気に入り情報に必要なリレーション(多対多)
+  public function favoredByUsers()
+  {
+      return $this->belongsToMany(User::class, 'favorites_facilities', 'sauna_id', 'user_id');
+  }
+
+  
+  // saunasテーブルが従テーブル
   // facility_types テーブルのデータを取得(facility_typesに依存)
   public function facilityType()
   {
@@ -73,17 +87,5 @@ class Sauna extends Model
       // saunas テーブルの facility_type_id カラムを参照して、facility_types テーブルの id カラムと関連づける
       return $this->belongsTo(Prefecture::class, 'prefecture_id');
   }
-  
 
-  // レビュー情報とのリレーション(1対多)
-  public function review()
-  {
-      return $this->hasMany(review::class);
-  }
-
-  // お気に入り情報に必要なリレーション(多対多)
-  public function favoredByUsers()
-  {
-      return $this->belongsToMany(User::class, 'favorites_facilities', 'sauna_id', 'user_id');
-  }
 }

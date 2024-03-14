@@ -1,5 +1,7 @@
 <script setup>
 import { Head, Link, useForm } from '@inertiajs/vue3';
+
+// コンポーネント
 import AuthenticationCard from '@/Components/AuthenticationCard.vue';
 import AuthenticationCardLogo from '@/Components/AuthenticationCardLogo.vue';
 import Checkbox from '@/Components/Checkbox.vue';
@@ -7,6 +9,10 @@ import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
+
+// バリデーション
+import { isValidEmail, isValidPassword } from '@/utils/validators';
+
 
 defineProps({
     canResetPassword: Boolean,
@@ -27,6 +33,25 @@ const submit = () => {
         onFinish: () => form.reset('password'),
     });
 };
+
+// バリデーション
+const validEmail = () => {
+  const { isValid, errorMessage } = isValidEmail(form.email);
+  if(!isValid) {
+    form.errors.email = errorMessage;
+  } else {
+    form.errors.email = "";
+  }
+}
+
+const validPassword = () => {
+  const { isValid, errorMessage} = isValidPassword(form.password);
+  if(!isValid) {
+    form.errors.password = errorMessage;
+  } else {
+    form.errors.password = "";
+  }
+}
 </script>
 
 <template>
@@ -52,6 +77,7 @@ const submit = () => {
                     required
                     autofocus
                     autocomplete="username"
+                    @blur="validEmail"
                 />
                 <InputError class="mt-2" :message="form.errors.email" />
             </div>
@@ -65,6 +91,7 @@ const submit = () => {
                     class="mt-1 block w-full"
                     required
                     autocomplete="current-password"
+                    @blur="validPassword"
                 />
                 <InputError class="mt-2" :message="form.errors.password" />
             </div>
@@ -77,11 +104,15 @@ const submit = () => {
             </div>
 
             <div class="flex items-center justify-end mt-4">
-                <Link v-if="canResetPassword" :href="route('password.request')" class="underline text-sm text-gray-600 hover:text-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 text-white">
+                <Link v-if="canResetPassword" 
+                      :href="route('password.request')" 
+                      class="underline text-sm text-gray-600 hover:text-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 text-white">
                     パスワードを忘れましたか？
                 </Link>
 
-                <PrimaryButton class="ml-4 border-white" :class="{ 'opacity-25': form.processing }" :disabled="form.processing">
+                <PrimaryButton class="ml-4 border-white" 
+                               :class="{ 'opacity-25': form.processing }" 
+                               :disabled="form.processing">
                     ログイン
                 </PrimaryButton>
             </div>

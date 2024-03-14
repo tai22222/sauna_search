@@ -12,6 +12,9 @@ import TextInput from '@/Components/TextInput.vue';
 import Textarea from '@/Components/Textarea.vue';
 import SelectBox from '@/Components/SelectBox.vue';
 
+// バリデーション
+import { isValidText, isValidMax, isValidPhone, isValidUrl, isValidNumber, isValidImageSize, isValidImageType} from '@/utils/validators';
+
 // Laravel (app.blade.php)のCSRFトークン取得
 const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
@@ -141,7 +144,7 @@ const selectedWaterType = ref(null)
 const bathTypeArray = Array.isArray(bathTypes) ? bathTypes : [bathTypes];
 const selectedBathType = ref(null)
 
-// waterOptions を定義(DBで定義ではない)
+// waterOptions を定義(DBで定義ではない) todo refでラップする必要なし
 const waterDepthOptions = ref([
     { id: 1, type_name: '20 ~ 40cm(すね)' },
     { id: 2, type_name: '40 ~ 60cm(ひざ)' },
@@ -151,7 +154,7 @@ const waterDepthOptions = ref([
     { id: 6, type_name: '140cm ~ (肩)' }
 ]);
 
-// 営業時間の曜日定義
+// 営業時間の曜日定義 todo refでラップする必要なし
 const daysOfWeek = ref({
   '月': 'mon',
   '火': 'tue',
@@ -186,12 +189,11 @@ const updateSaunaInformation = () => {
     // input タグの内容をフォームデータに追加(day_of_week_monに月など)
     Object.keys(daysOfWeek.value).forEach(day => {
       const dayAbbreviation = daysOfWeek.value[day];
-      // console.log(dayAbbreviation);
       form[`day_of_week_${dayAbbreviation}`] = day;
     });
 
     // フォームの内容をSaunaControllerのstoreアクションへ送信
-    form.post(route('sauna.store'), {
+    Inertia.post(route('sauna.store'), form, {
         // errorBag: 'updateProfileInformation',
         // preserveScroll: true,
         // onSuccess: () => clearPhotoFileInput(),
@@ -216,9 +218,26 @@ const selectNewPhoto = (index) => {
   }
 };
 
-// 画像を選択したときに実行(for対応)
+// 画像を選択したときに実行(for対応)→バリデーションも実行
 const selectImage = (event, field, index) => {
   const file = event.target.files[0];
+
+  // サイズのバリデーション
+  let validationResult = isValidImageSize(file);
+  if (!validationResult.isValid) {
+    form.errors[field] = validationResult.errorMessage;
+    return;
+  }
+
+  // 形式のバリデーション
+  validationResult = isValidImageType(file);
+  if (!validationResult.isValid) {
+    form.errors[field] = validationResult.errorMessage;
+    return;
+  }
+
+  form.errors[field] = ""; // エラーをクリア
+
   const reader = new FileReader();
   reader.onload = (e) => {
     // formデータに画像のURLを設定
@@ -235,6 +254,52 @@ const deleteImage = (field, index) => {
     // プレビュー画像表示のためにimageUrlsのvalueを更新
     imageUrls.value[index].value = '';
 };
+
+// バリデーション
+const validText = (field, max, min) => {
+  const {isValid, errorMessage } = isValidText(form[field], max, min);
+  if(!isValid) {
+    form.errors[field] = errorMessage;
+  } else {
+    form.errors[field] = "";
+  }
+}
+
+const validMax = (field, max) => {
+  const {isValid, errorMessage} = isValidMax(form[field], max);
+  if(!isValid) {
+    form.errors[field] = errorMessage;
+  } else {
+    form.errors[field] = "";
+  }
+}
+
+const validPhone = () => {
+  const { isValid, errorMessage } = isValidPhone(form.tel);
+  if(!isValid && form.tel !== "") {
+    form.errors.tel = errorMessage;
+  } else {
+    form.errors.tel = "";
+  }
+}
+
+const validUrl = () => {
+  const { isValid, errorMessage} = isValidUrl(form.website_url);
+  if(!isValid) {
+    form.errors.website_url = errorMessage;
+  } else {
+    form.errors.website_url = "";
+  }
+}
+
+const validNumber = (field) => {
+  const { isValid, errorMessage } = isValidNumber(form[field]);
+  if(!isValid) {
+    form.errors[field] = errorMessage;
+  } else {
+    form.errors[field] = "";
+  }
+}
 </script>
 
 <template>
@@ -266,8 +331,11 @@ const deleteImage = (field, index) => {
                     v-model="form.facility_name"
                     type="text"
                     class="mt-1 block w-full"
+                    required
+                    autofocus
                     autocomplete="facility_name"
                     placeholder="例： サウナ＆スパ カプセルホテル 大東洋"
+                    @blur="() => validText('facility_name', 50, 0)"
                 />
                 <InputError :message="form.errors.facility_name" class="mt-2" />
             </div>
@@ -280,8 +348,9 @@ const deleteImage = (field, index) => {
                   v-model="form.facility_type_id"
                   :initialValue="selectedFacilityType" 
                   :options="facilityTypesArray" 
-                  :error="form.errors.facility_type_id" 
+                  required
                 />
+                <InputError :message="form.errors.facility_type_id" class="mt-2" />
             </div>
 
             <!-- 利用形態 -->
@@ -292,8 +361,9 @@ const deleteImage = (field, index) => {
                   v-model="form.usage_type_id"
                   :initialValue="selectedUsageType" 
                   :options="usageTypeArray" 
-                  :error="form.errors.usage_type_id" 
+                  required
                 />
+                <InputError :message="form.errors.usage_type_id" class="mt-2" />
             </div>
 
             <!-- 都道府県 -->
@@ -305,8 +375,9 @@ const deleteImage = (field, index) => {
                   v-model="form.prefecture_id"
                   :initialValue="selectedPrefecture" 
                   :options="prefectureArray" 
-                  :error="form.errors.prefecture_id" 
+                  required
                 />
+                <InputError :message="form.errors.prefecture_id" class="mt-2" />
             </div>
 
             <!-- 住所1 -->
@@ -319,6 +390,7 @@ const deleteImage = (field, index) => {
                     class="mt-1 block w-full"
                     autocomplete="address1"
                     placeholder="例： 大阪市北区中崎西"
+                    @blur="() => validMax('address1', 50)"
                 />
                 <InputError :message="form.errors.address1" class="mt-2" />
             </div>
@@ -332,6 +404,7 @@ const deleteImage = (field, index) => {
                     class="mt-1 block w-full"
                     autocomplete="address2"
                     placeholder="例： 2-1-9"
+                    @blur="() => validMax('address2', 50)"
                 />
                 <InputError :message="form.errors.address2" class="mt-2" />
             </div>
@@ -345,6 +418,7 @@ const deleteImage = (field, index) => {
                     class="mt-1 block w-full"
                     autocomplete="address3"
                     placeholder="例： 中崎観光ビル大東洋"
+                    @blur="() => validMax('address3', 50)"
                 />
                 <InputError :message="form.errors.address3" class="mt-2" />
             </div>
@@ -362,6 +436,7 @@ const deleteImage = (field, index) => {
 JR「大阪」駅、地下鉄・阪急・阪神「梅田」駅より東へ徒歩10分程度
 （HEPナビオ、ドン・キホーテから東へ200m ※「都島通り」沿い）
 ・地下鉄谷町線「中崎町」駅4番出口より徒歩3分"
+                    @blur="() => validMax('access_text', 1000)"
                 />
                 <InputError :message="form.errors.access_text" class="mt-2" />
             </div>
@@ -376,6 +451,7 @@ JR「大阪」駅、地下鉄・阪急・阪神「梅田」駅より東へ徒歩
                     class="mt-1 block w-full"
                     autocomplete="tel"
                     placeholder="例： 06-6312-7522"
+                    @blur="validPhone"
                 />
                 <InputError :message="form.errors.tel" class="mt-2" />
             </div>
@@ -390,6 +466,7 @@ JR「大阪」駅、地下鉄・阪急・阪神「梅田」駅より東へ徒歩
                     class="mt-1 block w-full"
                     autocomplete="website_url"
                     placeholder="例： http://www.daitoyo.co.jp/spa/mens/"
+                    @blur="validUrl"
                 />
                 <InputError :message="form.errors.website_url" class="mt-2" />
             </div>
@@ -457,8 +534,6 @@ JR「大阪」駅、地下鉄・阪急・阪神「梅田」駅より東へ徒歩
                               id="'opening_time_' + alfDay"
                               value=""
                               type="time"
-                              class="mt-1 block w-full"
-                              placeholder="例： 12:00"
                           />
                       </div>
                       <div class="hidden">
@@ -468,8 +543,6 @@ JR「大阪」駅、地下鉄・阪急・阪神「梅田」駅より東へ徒歩
                               id="'closing_time_' + alfDay"
                               value=""
                               type="time"
-                              class="mt-1 block w-full"
-                              placeholder="例： 12:00"
                           />
                       </div>
                   </div>
@@ -488,6 +561,7 @@ JR「大阪」駅、地下鉄・阪急・阪神「梅田」駅より東へ徒歩
                     class="mt-1 block w-full min-h-48"
                     autocomplete="business_hours_detail"
                     placeholder="例： 毎日営業しているが、午前10時から午後12時までは清掃のため入浴不可"
+                    @blur="validMax('business_hours_detail', 1000)"
                 />
                 <InputError :message="form.errors.business_hours_detail" class="mt-2" />
             </div>
@@ -503,6 +577,7 @@ JR「大阪」駅、地下鉄・阪急・阪神「梅田」駅より東へ徒歩
                     class="mt-1 block w-full"
                     autocomplete="min_fee"
                     placeholder="例： 300"
+                    @blur="() => validNumber('min_fee')"
                   />
                   <span class="absolute inset-y-0 right-4 pr-3 flex items-center">円</span>
                 </div>
@@ -525,6 +600,7 @@ JR「大阪」駅、地下鉄・阪急・阪神「梅田」駅より東へ徒歩
 
 ※深夜料金　800円
 （深夜２時以降は深夜料金がかかります（60分コース以外)"
+                    @blur="validMax('fee_text', 1000)"
                 />
                 <InputError :message="form.errors.fee_text" class="mt-2" />
             </div>
@@ -543,7 +619,6 @@ JR「大阪」駅、地下鉄・阪急・阪神「梅田」駅より東へ徒歩
                   v-model="form.sauna_type_id"
                   :initialValue="selectedSaunaType" 
                   :options="saunaTypeArray" 
-                  :error="form.errors.sauna_type_id" 
                 />
             </div>
 
@@ -596,6 +671,7 @@ JR「大阪」駅、地下鉄・阪急・阪神「梅田」駅より東へ徒歩
                         class="mt-1 block w-full pr-12 col-span-1"
                         autocomplete="temperature"
                         placeholder="95"
+                        @blur="() => validNumber('temperature_sauna')"
                     />
                     <span class="absolute inset-y-0 right-0 pr-3 flex items-center">度</span>
                   </div>
@@ -617,6 +693,7 @@ JR「大阪」駅、地下鉄・阪急・阪神「梅田」駅より東へ徒歩
                         class="mt-1 block w-full pr-12 col-span-1"
                         autocomplete="capacity"
                         placeholder="10"
+                        @blur="() => validNumber('capacity_sauna')"
                     />
                     <span class="absolute inset-y-0 right-0 pr-3 flex items-center">人</span>
                   </div>
@@ -635,6 +712,7 @@ JR「大阪」駅、地下鉄・阪急・阪神「梅田」駅より東へ徒歩
                     class="mt-1 block w-full min-h-32"
                     autocomplete="additional_info"
                     placeholder="例： タオルに水を染み込ませて持ち込まないローカルなルール"
+                    @blur="() => validMax('additional_info_sauna')"
                 />
                 <InputError :message="form.errors.additional_info_sauna" class="mt-2" />
             </div>
@@ -653,7 +731,6 @@ JR「大阪」駅、地下鉄・阪急・阪神「梅田」駅より東へ徒歩
                   v-model="form.bath_type_id"
                   :initialValue="selectedBathType" 
                   :options="bathTypeArray" 
-                  :error="form.errors.bath_type_id" 
                 />
             </div>
 
@@ -665,7 +742,6 @@ JR「大阪」駅、地下鉄・阪急・阪神「梅田」駅より東へ徒歩
                   v-model="form.water_type_id"
                   :initialValue="selectedWaterType" 
                   :options="waterTypeArray" 
-                  :error="form.errors.water_type_id" 
                 />
             </div>
 
@@ -682,6 +758,7 @@ JR「大阪」駅、地下鉄・阪急・阪神「梅田」駅より東へ徒歩
                         class="mt-1 block w-full pr-12 col-span-1"
                         autocomplete="temperature"
                         placeholder="15"
+                        @blur="() => validNumber('temperature_water')"
                     />
                     <span class="absolute inset-y-0 right-0 pr-3 flex items-center">度</span>
                   </div>
@@ -703,6 +780,7 @@ JR「大阪」駅、地下鉄・阪急・阪神「梅田」駅より東へ徒歩
                         class="mt-1 block w-full pr-12 col-span-1"
                         autocomplete="capacity"
                         placeholder="5"
+                        @blur="() => validNumber('capacity_water')"
                     />
                     <span class="absolute inset-y-0 right-0 pr-3 flex items-center">人</span>
                   </div>
@@ -719,7 +797,6 @@ JR「大阪」駅、地下鉄・阪急・阪神「梅田」駅より東へ徒歩
                   v-model="form.deep_water"
                   :initialValue="selectedSaunaType" 
                   :options="waterDepthOptions" 
-                  :error="form.errors.deep_water" 
                 />
             </div>
 
@@ -733,6 +810,7 @@ JR「大阪」駅、地下鉄・阪急・阪神「梅田」駅より東へ徒歩
                     class="mt-1 block w-full min-h-32"
                     autocomplete="additional_info"
                     placeholder="例： 水風呂ではなく掛け流しタイプ"
+                    @blur="() => validMax('additional_info_sauna')"
                 />
                 <InputError :message="form.errors.access_text_water" class="mt-2" />
             </div>
@@ -789,7 +867,7 @@ JR「大阪」駅、地下鉄・阪急・阪神「梅田」駅より東へ徒歩
                       >
                           削除
                       </SecondaryButton>
-                      <InputError :message="form.errors.photo" class="mt-2" />
+                      <InputError :message="form.errors[image.key]" class="mt-2" />
                     </div>
                 </div>
             </div>
