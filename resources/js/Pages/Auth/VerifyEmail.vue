@@ -11,6 +11,7 @@ const props = defineProps({
 
 const form = useForm({});
 
+// vendor/laravel/fortify/routes/routes.phpのPassword Reset...部分
 const submit = () => {
     form.post(route('verification.send'));
 };

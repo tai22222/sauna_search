@@ -346,7 +346,7 @@ const validMax = (field, max) => {
               </div>
             </div>
 
-            <!-- home_sauna -->
+            <!-- ホームサウナ -->
             <div class="col-span-6 sm:col-span-4">
                 <InputLabel for="home_sauna" value="ホームサウナ" />
                 <TextInput
@@ -360,7 +360,7 @@ const validMax = (field, max) => {
                 <InputError :message="form.errors.home_sauna" class="mt-2" />
             </div>
 
-            <!-- profile_text -->
+            <!-- プロフィールテキスト -->
             <div class="col-span-6 sm:col-span-4">
                 <InputLabel for="profile_text" value="自己紹介" />
                 <Textarea

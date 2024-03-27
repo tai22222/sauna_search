@@ -121,6 +121,8 @@ const clearPhotoFileInput = () => {
         photoInput.value.value = null;
     }
 };
+
+console.log(process.env.NODE_ENV);
 </script>
 
 <template>
@@ -175,6 +177,7 @@ const clearPhotoFileInput = () => {
       </div>
 
       <div  v-for="review in reviews"
+            :key="review"
             class="grid grid-cols-6 gap-6 bg-gray-200 p-4 mb-4 rounded-2xl shadow">
         <div class="col-span-1">
           <span

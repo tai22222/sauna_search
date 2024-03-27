@@ -1,6 +1,5 @@
 <script setup>
 import { onMounted, ref, defineProps, defineEmits, defineExpose } from 'vue';
-import InputError from '@/Components/InputError.vue';
 
 // initialValueは初期値、modeValueは入力値、optionsは選択肢としての配列、columnはDBのカラム名
 const props = defineProps({

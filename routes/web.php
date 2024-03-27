@@ -26,7 +26,7 @@ Route::get('/', function () {
     ]);
 });
 
-// ログイン認証OKかつセッションOK
+// ユーザーが認証され（かつセッションが有効で）、必要に応じてメールアドレスの確認が済んでいる必要があり
 Route::middleware([
     'auth:sanctum',
     config('jetstream.auth_session'),

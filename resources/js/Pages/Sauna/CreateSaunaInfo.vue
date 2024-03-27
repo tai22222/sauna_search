@@ -1,6 +1,7 @@
 <script setup>
 import { ref, defineProps, onMounted  } from 'vue';
 import { useForm, usePage } from '@inertiajs/vue3';
+import { Inertia } from '@inertiajs/inertia'
 
 import ActionMessage from '@/Components/ActionMessage.vue';
 import FormSection from '@/Components/FormSection.vue';
@@ -477,7 +478,7 @@ JR「大阪」駅、地下鉄・阪急・阪神「梅田」駅より東へ徒歩
                 <div v-for="(alfDay, day) in daysOfWeek" 
                   :key="day" 
                   @click="selectDay(alfDay)" 
-                  class="inline-block p-4 mb-6 text-center text-gray-600 font-bold border border-gray-400 border rounded"
+                  class="inline-block p-4 mb-6 text-center text-gray-600 font-bold border border-gray-400 rounded"
                   :class="[selectedDay === alfDay ? ['bg-gray-500', 'text-white'] : 'bg-gray-200']">
                   {{ day }}
                 </div>
@@ -712,7 +713,7 @@ JR「大阪」駅、地下鉄・阪急・阪神「梅田」駅より東へ徒歩
                     class="mt-1 block w-full min-h-32"
                     autocomplete="additional_info"
                     placeholder="例： タオルに水を染み込ませて持ち込まないローカルなルール"
-                    @blur="() => validMax('additional_info_sauna')"
+                    @blur="() => validMax('additional_info_sauna', 1000)"
                 />
                 <InputError :message="form.errors.additional_info_sauna" class="mt-2" />
             </div>
@@ -810,7 +811,7 @@ JR「大阪」駅、地下鉄・阪急・阪神「梅田」駅より東へ徒歩
                     class="mt-1 block w-full min-h-32"
                     autocomplete="additional_info"
                     placeholder="例： 水風呂ではなく掛け流しタイプ"
-                    @blur="() => validMax('additional_info_sauna')"
+                    @blur="() => validMax('additional_info_sauna', 1000)"
                 />
                 <InputError :message="form.errors.access_text_water" class="mt-2" />
             </div>
@@ -822,13 +823,12 @@ JR「大阪」駅、地下鉄・阪急・阪神「梅田」駅より東へ徒歩
             </div>
             <h3 class="col-span-6 text-xl">【画像登録】</h3>
             <span class="col-span-4">※1枚目のメイン画像(外観)は必須</span>
-            <!-- todo 画像サイズの制限 -->
           <!-- 画像アップロード 6枚(main1枚と1~5のimage) -->
           <div class="col-span-6">
                 <!-- 施設メイン画像のinput -->
                 <div class="grid grid-cols-6 gap-8">
                   <!-- todo 各画像のキャプションを追加 -->
-                    <div v-for="(image, index) in imageUrls" key="index" class="col-span-3 md:col-span-2 sm:col-span-3">
+                    <div v-for="(image, index) in imageUrls" :key="index" class="col-span-3 md:col-span-2 sm:col-span-3">
                       <input
                         :ref="`imageInputs${index}`"
                         type="file"
