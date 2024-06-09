@@ -79,7 +79,7 @@ class User extends Authenticatable
     // レビュー情報とのリレーション(1対多)
     public function review()
     {
-        return $this->hasMany(review::class);
+        return $this->hasMany(Review::class);
     }
 
     // お気に入り情報に必要なリレーション
