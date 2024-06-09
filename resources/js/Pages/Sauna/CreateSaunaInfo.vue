@@ -14,7 +14,7 @@ import Textarea from '@/Components/Textarea.vue';
 import SelectBox from '@/Components/SelectBox.vue';
 
 // バリデーション
-import { isValidText, isValidMax, isValidPhone, isValidUrl, isValidNumber, isValidImageSize, isValidImageType} from '@/utils/validators';
+import { isValidText, isValidMax, isValidPhone, isValidUrl, isValidNumber, isValidImageSize, isValidImageType} from '@/Utils/validators';
 
 // Laravel (app.blade.php)のCSRFトークン取得
 const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');

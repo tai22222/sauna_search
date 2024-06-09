@@ -11,7 +11,7 @@ import PrimaryButton from '@/Components/PrimaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
 
 // バリデーション
-import { isValidEmail, isValidPassword } from '@/utils/validators';
+import { isValidEmail, isValidPassword } from '@/Utils/validators';
 
 
 defineProps({

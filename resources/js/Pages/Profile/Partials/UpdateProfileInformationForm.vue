@@ -13,7 +13,7 @@ import Textarea from '@/Components/Textarea.vue';
 import SelectBox from '@/Components/SelectBox.vue';
 
 // バリデーション
-import { isValidText, isValidEmail, isValidMax } from '@/utils/validators';
+import { isValidText, isValidEmail, isValidMax } from '@/Utils/validators';
 
 // 親コンポーネント(Create.vue)からオブジェクト、配列の受け渡し
 const props = defineProps({

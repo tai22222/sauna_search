@@ -24,7 +24,7 @@ import {
   isValidNumber,
   isValidImageSize,
   isValidImageType,
-} from "@/utils/validators";
+} from "@/Utils/validators";
 
 // Laravel (app.blade.php)のCSRFトークン取得
 const csrfToken = document

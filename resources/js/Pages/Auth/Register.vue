@@ -10,7 +10,7 @@ import PrimaryButton from '@/Components/PrimaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
 
 // バリデーション
-import { isValidText, isValidEmail, isValidPassword, doPasswordsMatch } from '@/utils/validators';
+import { isValidText, isValidEmail, isValidPassword, doPasswordsMatch } from '@/Utils/validators';
 
 const form = useForm({
     name: '',
