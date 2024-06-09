@@ -397,7 +397,7 @@ const validNumber = (field) => {
             </div>
             <!-- 住所2 -->
             <div class="col-span-6">
-                <InputLabel for="address2" value="住所2" />
+                <InputLabel for="address2" value="住所2 (※必須)" />
                 <TextInput
                     id="address2"
                     v-model="form.address2"
