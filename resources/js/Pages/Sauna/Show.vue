@@ -314,7 +314,7 @@ const toggleFavorite = async () => {
     console.log(isFavorited);
     // APIリクエストの送信
     const response = await axios.post(
-      `${baseUrI}api/saunas/${sauna.id}/toggle-favorite`,
+      `api/saunas/${sauna.id}/toggle-favorite`,
       { sauna_id: sauna.id, user_id: auth.user.id },
       { withCredentials: true }
     );
