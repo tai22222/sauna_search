@@ -23,7 +23,6 @@ axios.defaults.headers.common["X-CSRF-TOKEN"] = csrfToken;
 
 // ベースURLの設定
 const baseUrl = import.meta.env.VITE_APP_BASE_URL;
-const baseUrI = import.meta.env.VITE_APP_BASE_URI;
 
 // 親コンポーネント(Create.vue)からオブジェクト、配列の受け渡し(CompositionAPI、ObjectはArrayも含む)
 const props = defineProps({
@@ -314,7 +313,7 @@ const toggleFavorite = async () => {
     console.log(isFavorited);
     // APIリクエストの送信
     const response = await axios.post(
-      `api/saunas/${sauna.id}/toggle-favorite`,
+      `${baseUrl}api/saunas/${sauna.id}/toggle-favorite`,
       { sauna_id: sauna.id, user_id: auth.user.id },
       { withCredentials: true }
     );
