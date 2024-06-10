@@ -6,7 +6,7 @@ const baseUrl = import.meta.env.VITE_APP_BASE_URL;
 </script>
 
 <template>
-    <Link :href="`${baseUrl}`">
+    <Link :href="route('sauna.index')" >
         <!-- <svg
             class="w-16 h-16"
             viewBox="0 0 48 48"

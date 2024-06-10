@@ -47,7 +47,7 @@ Route::middleware([
     Route::put('/saunas', [SaunaController::class, 'index'])->name('sauna.update');
     
     // saunas 一覧表示(検索画面)(未ログイン時でも表示)
-    Route::get('/saunas', [SaunaController::class, 'index'])->name('sauna.index');
+    // Route::get('/saunas', [SaunaController::class, 'index'])->name('sauna.index');
     // saunas 施設情報(未ログインでも表示)
     Route::get('/saunas/{id}', [SaunaController::class, 'show'])->name('sauna.show');
     
@@ -56,7 +56,7 @@ Route::middleware([
 });
 
 // saunas 一覧表示(検索画面)(未ログイン時でも表示)
-// Route::get('/saunas', [SaunaController::class, 'index'])->name('sauna.index');
+Route::get('/saunas', [SaunaController::class, 'index'])->name('sauna.index');
 
 // saunas 施設情報(未ログインでも表示)
 // Route::get('/saunas/{id}', [SaunaController::class, 'show'])->name('sauna.show');

@@ -23,7 +23,6 @@ import SectionBorder from "@/Components/SectionBorder.vue";
 
 // .envからbaseURLの設定
 const baseUrl = import.meta.env.VITE_APP_BASE_URL;
-console.log(baseUrl);
 
 // 親コンポーネント(Create.vue)からオブジェクト、配列の受け渡し(CompositionAPI、ObjectはArrayも含む)
 const props = defineProps({

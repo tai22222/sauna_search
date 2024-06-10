@@ -108,7 +108,7 @@ const validPassword = () => {
         <Link
           v-if="canResetPassword"
           :href="route('password.request')"
-          class="underline text-sm text-gray-600 hover:text-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 text-white"
+          class="underline text-sm hover:text-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 text-white"
         >
           パスワードを忘れましたか？
         </Link>
@@ -121,6 +121,16 @@ const validPassword = () => {
           ログイン
         </PrimaryButton>
       </div>
+
+      <div class="flex items-center justify-end mt-4">
+      <Link
+          v-if="canResetPassword"
+          :href="route('register')"
+          class="underline text-sm hover:text-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 text-white"
+        >
+          新規登録はこちら
+        </Link>
+        </div>
     </form>
   </AuthenticationCard>
 </template>

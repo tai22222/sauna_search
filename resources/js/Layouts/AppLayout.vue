@@ -101,6 +101,17 @@ const logout = () => {
                                     Newサウナの追加
                                 </NavLink>
                             </div>
+                            
+                            <div v-if="!$page.props.auth.user" class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
+                                <NavLink :href="route('login')">
+                                    ログイン
+                                </NavLink>
+                            </div>
+                            <div v-if="!$page.props.auth.user" class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
+                                <NavLink :href="route('register')">
+                                    新規登録
+                                </NavLink>
+                            </div>
                         </div>
 
                         <div class="hidden sm:flex sm:items-center sm:ml-6">
@@ -261,11 +272,11 @@ const logout = () => {
                     <!-- Responsive Settings Options -->
                     <div class="pt-4 pb-1 border-t border-gray-200">
                         <div class="flex items-center px-4">
-                            <div v-if="$page.props.jetstream.managesProfilePhotos" class="shrink-0 mr-3">
+                            <div v-if="$page.props.jetstream.managesProfilePhotos && $page.props.auth.user" class="shrink-0 mr-3">
                                 <img class="h-10 w-10 rounded-full object-cover" :src="$page.props.auth.user.profile_photo_url" :alt="$page.props.auth.user.name">
                             </div>
 
-                            <div>
+                            <div v-if="$page.props.auth.user">
                                 <div class="font-medium text-base text-gray-800">
                                     {{ $page.props.auth.user.name }}
                                 </div>
@@ -287,15 +298,16 @@ const logout = () => {
                             </ResponsiveNavLink>
 
                             <!-- Authentication -->
-                            <form method="POST" @submit.prevent="logout">
-                                <ResponsiveNavLink as="button">
-                                    ログアウト
-                                </ResponsiveNavLink>
-                            </form>
-                            <ResponsiveNavLink :href="route('profile.show')" :active="route().current('profile.show')">
-                                アカウント削除
-                            </ResponsiveNavLink>
-
+                            <div v-if="$page.props.auth.user">
+                              <form method="POST" @submit.prevent="logout">
+                                  <ResponsiveNavLink as="button">
+                                      ログアウト
+                                  </ResponsiveNavLink>
+                              </form>
+                              <ResponsiveNavLink :href="route('profile.show')" :active="route().current('profile.show')">
+                                  アカウント削除
+                              </ResponsiveNavLink>
+                            </div>
                             <!-- Team Management -->
                             <template v-if="$page.props.jetstream.hasTeamFeatures">
                                 <div class="border-t border-gray-200" />
