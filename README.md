@@ -15,7 +15,7 @@ https://sauna-searcher.com/saunas
 
 | ユーザ名      | パスワード     |
 |---------------|----------------|
-| test@mail     | password       |
+| sample@mail     | password       |
 
 ## アプリケーションの制作経緯
 
