@@ -79,26 +79,26 @@ const logout = () => {
         <div class="min-h-screen">
           <nav class="bg-main border-b border-gray-100">
 
-                <!-- Primary Navigation Menu -->
+                <!-- ヘッダー左側 メニュー -->
                 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div class="flex justify-between h-16">
                         <div class="flex">
-                            <!-- Logo -->
+                            <!-- ロゴ -->
                             <div class="shrink-0 flex items-center">
                                 <Link :href="route('sauna.index')">
                                     <ApplicationMark class="block h-9 w-auto" />
                                 </Link>
                             </div>
 
-                            <!-- Navigation Links -->
+                            <!-- ナビゲーションリンク -->
                             <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
                                 <NavLink :href="route('sauna.index')" :active="route().current('sauna.index')">
                                     TOP
                                 </NavLink>
                             </div>
-                            <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
+                            <div v-if="$page.props.auth.user" class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
                                 <NavLink :href="route('sauna.create')" :active="route().current('sauna.create')">
-                                    Newサウナの追加
+                                    サウナ施設の追加
                                 </NavLink>
                             </div>
                             
@@ -174,10 +174,10 @@ const logout = () => {
                             </div>
 
                             <!-- Settings Dropdown プロフィール機能がtrueの時に表示-->
-                            <div class="ml-3 relative">
+                            <div v-if="$page.props.auth.user" class="ml-3 relative">
                                 <Dropdown align="right" width="48">
                                     <template #trigger>
-                                        <button v-if="$page.props.jetstream.managesProfilePhotos && $page.props.auth.user" 
+                                        <button v-if="$page.props.jetstream.managesProfilePhotos" 
                                                 class="flex text-sm border-2 border-transparent rounded-full focus:outline-none focus:border-gray-300 transition">
                                             <img class="h-8 w-8 rounded-full object-cover" 
                                                  :src="$page.props.auth.user.profile_photo_url" 
@@ -227,7 +227,8 @@ const logout = () => {
                             </div>
                         </div>
 
-                        <!-- Hamburger -->
+
+                        <!-- Hamburgermenu -->
                         <div class="-mr-2 flex items-center sm:hidden">
                             <button class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 focus:text-gray-500 transition duration-150 ease-in-out" @click="showingNavigationDropdown = ! showingNavigationDropdown">
                                 <svg
@@ -256,8 +257,11 @@ const logout = () => {
                     </div>
                 </div>
 
-                <!-- Responsive Navigation Menu -->
-                <div :class="{'block': showingNavigationDropdown, 'hidden': ! showingNavigationDropdown}" class="sm:hidden">
+                <!-- ハンバーガーメニュー 開封時 -->
+                <div v-if="$page.props.auth.user" 
+                    :class="{'block': showingNavigationDropdown, 'hidden': ! showingNavigationDropdown}" 
+                    class="sm:hidden">
+
                     <div class="pt-2 pb-3 space-y-1">
                         <ResponsiveNavLink :href="route('sauna.index')" :active="route().current('sauna.index')">
                             TOP
@@ -265,7 +269,7 @@ const logout = () => {
                     </div>
                     <div class="pt-2 pb-3 space-y-1">
                         <ResponsiveNavLink :href="route('sauna.create')" :active="route().current('sauna.create')">
-                            Newサウナの追加
+                            サウナ施設の追加
                         </ResponsiveNavLink>
                     </div>
 
@@ -304,7 +308,9 @@ const logout = () => {
                                       ログアウト
                                   </ResponsiveNavLink>
                               </form>
-                              <ResponsiveNavLink :href="route('profile.show')" :active="route().current('profile.show')">
+                              <!-- プロフィール編集ページへ遷移 -->
+                              <ResponsiveNavLink :href="route('profile.show')" :active="route().current('profile.show')"
+                              class="bg-red-300" >
                                   アカウント削除
                               </ResponsiveNavLink>
                             </div>
@@ -349,14 +355,36 @@ const logout = () => {
                         </div>
                     </div>
                 </div>
+
+                <!-- ハンバーガーメニュー 開封時(未ログイン時) -->
+                <div v-else :class="{'block': showingNavigationDropdown, 'hidden': ! showingNavigationDropdown}" class="sm:hidden">
+                    <div class="pt-2 pb-3 space-y-1">
+                        <ResponsiveNavLink :href="route('sauna.index')" :active="route().current('sauna.index')">
+                            TOP
+                        </ResponsiveNavLink>
+                    </div>
+                    <!-- Responsive Settings Options -->
+                    <div class="pt-2 pb-1 border-t border-gray-200">
+                        <div class="mt-1 space-y-1">
+                            <ResponsiveNavLink :href="route('login')">
+                                ログイン
+                            </ResponsiveNavLink>
+                            <ResponsiveNavLink :href="route('register')">
+                                新規登録
+                            </ResponsiveNavLink>
+
+                        </div>
+                    </div>
+                </div>
             </nav>
 
-            <!-- Page Heading -->
+            <!-- ヘッダー -->
             <header v-if="$slots.header" class="bg-white shadow">
                 <div class="max-w-7xl mx-auto py-3 px-4 sm:px-6 lg:px-8">
                     <slot name="header" />
                 </div>
             </header>
+
             <!-- フラッシュメッセージの表示 -->
             <transition name="flash">
               <div v-if="successMessage" class="text-center bg-green-500/70 text-white font-bold p-4 rounded mb-4" role="alert">
@@ -369,7 +397,7 @@ const logout = () => {
             </div>
           </transition>
 
-            <!-- Page Content -->
+            <!-- ページメイン コンポーネント -->
             <main class="bg-gray-200 text-gray-700">
                 <slot />
             </main>

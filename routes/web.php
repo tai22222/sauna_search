@@ -19,12 +19,13 @@ use App\Http\Middleware\LogRouteActivity;
 | contains the "web" middleware group. Now create something great!
 |
 */
-Route::get('/', function () {
-    return Inertia::render('Welcome', [
-        'canLogin' => Route::has('login'),
-        'canRegister' => Route::has('register'),
-    ]);
-});
+// Route::get('/', function () {
+//     return Inertia::render('Welcome', [
+//         'canLogin' => Route::has('login'),
+//         'canRegister' => Route::has('register'),
+//     ]);
+// });
+Route::get('/', [SaunaController::class, 'index'])->name('dashboard');
 
 // ユーザーが認証され（かつセッションが有効で）、必要に応じてメールアドレスの確認が済んでいる必要があり
 Route::middleware([
