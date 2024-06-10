@@ -150,7 +150,7 @@ console.log(reviews[0].sauna.id);
     </div>
     <div class="col-span-12 grid grid-cols-12 gap-4">
       <div class="col-span-5 md:col-span-3">
-        ホームサウナaa
+        ホームサウナ
       </div>
       <div class="col-span-7 mad:col-span-9">
         {{ user.home_sauna }}
