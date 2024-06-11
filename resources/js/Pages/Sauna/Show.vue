@@ -309,8 +309,7 @@ const toggleFavorite = async () => {
     isFavorited.value ? favoritesCount.value-- : favoritesCount.value++;
     const previousIsFavorited = isFavorited.value;
     isFavorited.value = !isFavorited.value;
-    console.log(favoritesCount);
-    console.log(isFavorited);
+
     // APIリクエストの送信
     const response = await axios.post(
       `${baseUrl}api/saunas/${sauna.id}/toggle-favorite`,
@@ -318,8 +317,6 @@ const toggleFavorite = async () => {
       { withCredentials: true }
     );
     favoritesCount.value = response.data.favoritesCount;
-    console.log(favoritesCount);
-    console.log(isFavorited);
   } catch (error) {
     console.error("お気に入りのトグルに失敗しました");
     // エラーが発生した場合は、UIの更新を元に戻す
@@ -623,7 +620,6 @@ onMounted(async () => {
                       <a href="" class="border-b-4 border-blue-200">施設情報</a>
                     </li>
                     <li><a href="">サ活(準備中)</a></li>
-                    <li><a href="">サウナ飯(準備中)</a></li>
                   </ul>
                 </div>
               </div>
