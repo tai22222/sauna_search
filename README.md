@@ -50,7 +50,7 @@ https://sauna-searcher.com/saunas
 
 ### AWS構成図
 
-![AWS構成図](https://github.com/tai22222/images/raw/main/infra-aws.png)
+![AWS構成図](https://github.com/tai22222/images/raw/main/sauna_aws.png)
 
 ### 技術選定の基準
 
@@ -91,7 +91,7 @@ https://sauna-searcher.com/saunas
 
 ### ER図
 
-![ER図](https://github.com/tai22222/images/raw/main/er-diagram.png)
+![ER図](https://github.com/tai22222/images/raw/main/sauna_db_er-diagram.png)
 
 ### 機能一覧
 
